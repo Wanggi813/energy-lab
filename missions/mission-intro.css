@@ -1,0 +1,157 @@
+.mission-intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 8, 18, 0.96);
+  backdrop-filter: blur(6px);
+  padding: 20px;
+}
+
+.mission-intro-overlay.hidden {
+  display: none;
+}
+
+.mi-card {
+  width: min(640px, 100%);
+  padding: 32px 36px;
+  background: rgba(8, 17, 34, 0.98);
+  border: 1px solid rgba(48, 213, 255, 0.28);
+  border-radius: 16px;
+  box-shadow: 0 0 60px rgba(48, 213, 255, 0.10), 0 24px 80px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mi-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mi-number {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: #30d5ff;
+  text-transform: uppercase;
+}
+
+.mi-title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #f0f8ff;
+  line-height: 1.2;
+}
+
+.mi-divider {
+  height: 1px;
+  background: rgba(48, 213, 255, 0.14);
+}
+
+.mi-story {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mi-story-label {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #ffb347;
+  text-transform: uppercase;
+}
+
+.mi-story p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #b8d0e8;
+  line-height: 1.6;
+}
+
+.mi-concept {
+  padding: 18px 20px;
+  background: rgba(48, 213, 255, 0.07);
+  border: 1px solid rgba(48, 213, 255, 0.20);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mi-concept-tag {
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: #30d5ff;
+  text-transform: uppercase;
+}
+
+.mi-concept-name {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #f0f8ff;
+}
+
+.mi-concept-desc {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #9fb8cf;
+  line-height: 1.55;
+}
+
+.mi-formulas {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.mi-formula {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #3ee68f;
+  font-family: "Courier New", monospace;
+  padding: 6px 12px;
+  background: rgba(62, 230, 143, 0.09);
+  border-left: 3px solid rgba(62, 230, 143, 0.5);
+  border-radius: 0 6px 6px 0;
+}
+
+.mi-formula-sub {
+  display: flex;
+  gap: 16px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #7ed8b0;
+  font-family: "Courier New", monospace;
+  padding: 4px 12px;
+}
+
+.mi-start-btn {
+  margin-top: 4px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #30d5ff, #3ee68f);
+  color: #021018;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: opacity 0.15s, transform 0.1s;
+  align-self: flex-end;
+}
+
+.mi-start-btn:hover {
+  opacity: 0.9;
+}
+
+.mi-start-btn:active {
+  transform: scale(0.97);
+}

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>스노보드 하프파이프 - 에너지 트랜스퍼</title>
+  <meta name="description" content="스노보드 하프파이프에서 위치에너지와 운동에너지의 전환을 조작하며 안정적인 착지를 완성하는 역학 시뮬레이션입니다.">
+  <link rel="stylesheet" href="./mission1.css?v=3">
+  <link rel="stylesheet" href="./mission-intro.css">
+  <link rel="stylesheet" href="./mission-ui.css?v=4">
+</head>
+<body>
+  <!-- 미션 인트로 -->
+  <div id="mission-intro" class="mission-intro-overlay">
+    <div class="mi-card">
+      <div class="mi-header">
+        <span class="mi-number">Mission 01</span>
+        <h1 class="mi-title">하프파이프 에너지 트랜스퍼</h1>
+        <button class="mission-back-btn mission-back-btn--intro" type="button" data-mission-back aria-label="로비로 돌아가기">로비</button>
+      </div>
+      <div class="mi-divider"></div>
+      <div class="mi-story">
+        <span class="mi-story-label">🔬 실험 목표</span>
+        <p>하프파이프 훈련을 통해 에너지 전환의 원리를 체험한다. 라이더와 함께 파이프를 타며 위치에너지와 운동에너지가 어떻게 전환되는지 직접 확인하라.</p>
+      </div>
+      <div class="mi-concept">
+        <div class="mi-concept-tag">오늘의 물리 개념</div>
+        <div class="mi-concept-name">⚡ 에너지 보존 법칙</div>
+        <p class="mi-concept-desc">마찰이 없을 때, 운동에너지와 위치에너지의 합은 항상 일정하다. 높이 올라갈수록 속도가 줄고, 아래로 내려올수록 속도가 빨라진다.</p>
+        <div class="mi-formulas">
+          <div class="mi-formula">Ek + Ep = 일정</div>
+          <div class="mi-formula-sub">
+            <span>Ek = ½mv²</span>
+            <span>Ep = mgh</span>
+          </div>
+        </div>
+      </div>
+      <button class="mi-start-btn" id="mi-start">미션 시작 →</button>
+    </div>
+  </div>
+
+  <!-- 게임 튜토리얼 오버레이 (미션 시작 후 표시) -->
+  <div id="game-tutorial" class="game-tutorial hidden">
+    <div class="gt-card">
+      <div class="gt-kicker">Mission 01 · 가이드</div>
+      <h2 class="gt-title">목표 &amp; 조작법</h2>
+      <div class="gt-goal">
+        <span class="gt-goal-icon">🎯</span>
+        <div>
+          <strong>착지 5회 성공 → 미션 클리어</strong>
+          <p>파이프를 타며 공중에 올라 깨끗하게 착지하면 됩니다.</p>
+        </div>
+      </div>
+      <div class="gt-controls">
+        <div class="gt-ctrl-row">
+          <kbd>SPACE</kbd>
+          <div>
+            <strong>바닥 펌프</strong>
+            <span>파이프 바닥 통과 시 눌러 에너지 추가 — 높이가 올라갑니다</span>
+          </div>
+        </div>
+        <div class="gt-ctrl-row">
+          <kbd>SPACE</kbd>
+          <div>
+            <strong>립 팝</strong>
+            <span>파이프 끝(lip)에서 눌러 추가 높이 확보 — 공중 시간이 늘어납니다</span>
+          </div>
+        </div>
+        <div class="gt-ctrl-row">
+          <kbd>← →</kbd>
+          <div>
+            <strong>균형 조절</strong>
+            <span>공중에서 보드 각도를 초록 착지선에 맞추면 클린 착지</span>
+          </div>
+        </div>
+      </div>
+      <button id="gt-start" class="gt-start-btn">시작! →</button>
+    </div>
+  </div>
+
+  <canvas id="game-canvas" aria-label="스노보드 하프파이프 에너지 시뮬레이션"></canvas>
+  <!-- 복도 복귀 버튼 -->
+  <div class="mission-back-slot mission-back-slot--mission1">
+    <button class="mission-back-btn" type="button" data-mission-back aria-label="로비로 돌아가기">로비</button>
+  </div>
+
+
+  <div id="portrait-warning">
+    <strong>가로 화면으로 플레이하세요</strong>
+    <span>하프파이프 전체를 보려면 화면을 돌려 주세요.</span>
+  </div>
+
+  <header class="hud hud-top">
+    <div class="mission-mark">
+      <span class="kicker">Mission 01</span>
+      <h1>하프파이프 에너지 트랜스퍼</h1>
+    </div>
+    <div class="score-strip">
+      <div class="score-cell">
+        <span>착지 성공</span>
+        <strong id="score-value">0 / 5</strong>
+      </div>
+      <div class="score-cell">
+        <span>스타일 점수</span>
+        <strong id="target-value">0</strong>
+      </div>
+      <div class="score-cell">
+        <span>남은 시간</span>
+        <strong id="time-value">75.0</strong>
+      </div>
+    </div>
+  </header>
+
+  <aside class="panel control-panel">
+    <div class="panel-head">
+      <span class="kicker">Ride Control</span>
+      <h2>라이딩 조작</h2>
+    </div>
+
+    <div class="button-row">
+      <button id="start-btn" class="primary-btn">시작</button>
+      <button id="reset-btn" class="ghost-btn">초기화</button>
+    </div>
+
+    <div class="control-group" style="display:none">
+      <label for="friction-slider">
+        <span>마찰 손실</span>
+        <strong><span id="friction-readout">0</span>%</strong>
+      </label>
+      <input id="friction-slider" type="range" min="0" max="8" step="1" value="0">
+    </div>
+
+    <div class="control-grid">
+      <div class="control-key">
+        <b>Space</b>
+        <span>바닥 펌프 / 립 팝</span>
+      </div>
+      <div class="control-key">
+        <b>← →</b>
+        <span>균형 조절</span>
+      </div>
+      <div class="control-key control-key-goal">
+        <b>목표</b>
+        <span>착지 5회 성공</span>
+      </div>
+    </div>
+  </aside>
+
+  <aside class="panel energy-panel">
+    <div class="panel-head">
+      <span class="kicker">Live Energy</span>
+      <h2>에너지 전환</h2>
+    </div>
+
+    <div class="energy-row">
+      <div class="energy-label">
+        <span>위치에너지 Ep</span>
+        <strong id="ep-value">0 J</strong>
+      </div>
+      <div class="energy-track"><div id="ep-bar" class="energy-fill ep-fill"></div></div>
+    </div>
+
+    <div class="energy-row">
+      <div class="energy-label">
+        <span>운동에너지 Ek</span>
+        <strong id="ek-value">0 J</strong>
+      </div>
+      <div class="energy-track"><div id="ek-bar" class="energy-fill ek-fill"></div></div>
+    </div>
+
+    <div class="energy-row energy-row-stack">
+      <div class="energy-label">
+        <span>Ep + Ek 합산</span>
+        <strong id="conservation-badge"></strong>
+      </div>
+      <div class="energy-track energy-stack-track">
+        <div id="ep-stack" class="energy-fill ep-fill"></div>
+        <div id="ek-stack" class="energy-fill ek-fill"></div>
+      </div>
+    </div>
+
+    <div class="energy-row">
+      <div class="energy-label">
+        <span>총 역학적 에너지</span>
+        <strong id="total-value">0 J</strong>
+      </div>
+      <div class="energy-track"><div id="total-bar" class="energy-fill total-fill"></div></div>
+    </div>
+
+    <div class="energy-note" id="energy-note">
+      마찰 0%에서는 Ep + Ek가 보존됩니다.
+    </div>
+
+    <div class="energy-graph-wrap">
+      <div class="energy-graph-legend">
+        <span style="color:#ffcf5b">■ Ep</span>
+        <span style="color:#3ee68f">■ Ek</span>
+        <span class="energy-graph-kicker">에너지 변화</span>
+      </div>
+      <canvas id="energy-graph"></canvas>
+    </div>
+
+    <div class="telemetry-grid">
+      <div>
+        <span>높이</span>
+        <strong><span id="height-value">0.0</span> m</strong>
+      </div>
+      <div>
+        <span>속력</span>
+        <strong><span id="speed-value">0.0</span> m/s</strong>
+      </div>
+      <div>
+        <span>최고 높이</span>
+        <strong><span id="peak-value">0.0</span> m</strong>
+      </div>
+      <div>
+        <span>콤보</span>
+        <strong>x<span id="combo-value">1.0</span></strong>
+      </div>
+    </div>
+  </aside>
+
+  <section class="panel event-panel" id="event-panel">
+    <span id="event-text">시작을 누르고 첫 벽을 타세요.</span>
+  </section>
+
+  <div class="touch-controls" aria-hidden="true">
+    <button class="touch-btn" data-control="left">←</button>
+    <button class="touch-btn pump-touch" data-control="pump">PUMP</button>
+    <button class="touch-btn" data-control="right">→</button>
+  </div>
+
+  <div class="result-modal" id="result-modal" aria-live="polite">
+    <div class="result-box">
+      <span class="kicker" id="result-kicker">Run Complete</span>
+      <h2 id="result-title">라이딩 종료</h2>
+      <p id="result-copy">착지 기록을 확인하세요.</p>
+      <div class="result-stats">
+        <div><span>착지 성공</span><strong id="result-score">0 / 5</strong></div>
+        <div><span>이번 점수</span><strong id="result-style-score">0</strong></div>
+      </div>
+      <div class="button-row">
+        <button id="again-btn" class="ghost-btn">다시 타기</button>
+        <button id="complete-btn" class="primary-btn">미션 완료</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script src="../progress.js"></script>
+  <script src="./mission-ui.js?v=5"></script>
+  <script src="./mission1-rider.js"></script>
+  <script src="./mission1.js"></script>
+  <script src="./mission1-three.js"></script>
+  <script src="./mission1-draw.js"></script>
+  <script>
+    resize();
+    initThree();
+    initEnergyGraph();
+    bindControls();
+    resetRun('idle');
+    updateUi();
+    draw();
+    window.addEventListener('resize', resize);
+    raf = requestAnimationFrame(loop);
+
+    document.getElementById('mi-start').addEventListener('click', () => {
+      document.getElementById('mission-intro').classList.add('hidden');
+      document.getElementById('game-tutorial').classList.remove('hidden');
+    });
+    document.getElementById('gt-start').addEventListener('click', () => {
+      document.getElementById('game-tutorial').classList.add('hidden');
+    });
+  </script>
+</body>
+</html>

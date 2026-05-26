@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>일과 에너지</title>
+    <meta name="description" content="힘과 변위가 만드는 일, 위치에너지와 운동에너지의 변화를 함께 확인하는 역학 시뮬레이션입니다.">
+    <link rel="stylesheet" href="./mission2.css">
+    <link rel="stylesheet" href="./mission-ui.css?v=4">
+</head>
+
+<body>
+    <!-- 미션 인트로 -->
+    <div id="mission-intro" class="mission-intro-overlay">
+      <div class="mi-card">
+        <div>
+          <div class="mi-number">Mission 02</div>
+          <h1 class="mi-title" style="margin:6px 0 0">일과 에너지 — 마찰 탐구</h1>
+        </div>
+        <div class="mi-divider"></div>
+        <div>
+          <span class="mi-story-label">🔬 실험 목표</span>
+          <p class="mi-story p" style="margin:0;font-size:0.95rem;color:#b8d0e8;line-height:1.6">컬링 경기장에서 마찰이 에너지에 미치는 영향을 실험한다. 다양한 조건에서 스톤을 밀어보며 마찰이 운동에너지를 어떻게 열에너지로 전환하는지 탐구하라.</p>
+        </div>
+        <div class="mi-concept">
+          <div class="mi-concept-tag">오늘의 물리 개념</div>
+          <div class="mi-concept-name">🔥 마찰로 인한 에너지 손실</div>
+          <p class="mi-concept-desc">마찰력은 운동에너지를 열에너지로 전환한다. 마찰력이 클수록, 이동 거리가 길수록 에너지 손실이 커진다.</p>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+            <div class="mi-formula">Q = 마찰력 × 이동거리</div>
+            <div class="mi-formula-sub">
+              <span>Q = 열에너지 손실</span>
+              <span>마찰력이 클수록 손실↑</span>
+            </div>
+          </div>
+        </div>
+        <button class="mi-start-btn" id="mi-start">미션 시작 →</button>
+      </div>
+    </div>
+
+    <div id="portrait-warning">
+        <div style="font-size: 4rem; margin-bottom: 20px;">📱 🔄</div>
+        원활한 시뮬레이션을 위해<br>기기를 <b>가로 모드</b>로 회전해주세요.
+    </div>
+
+    <div id="progress-panel" class="panel">
+        <div class="progress-head">
+            <span>&#53944;&#47001; &#51652;&#54665;&#46020;</span>
+            <div class="progress-meta">
+                <span id="progress-current">2.00 m</span>
+                <span>/</span>
+                <span id="progress-total">32.00 m</span>
+            </div>
+            <strong id="progress-percent">0%</strong>
+        </div>
+        <div class="distance-track">
+            <div id="progress-fill"></div>
+            <div class="progress-house"></div>
+            <div id="progress-stone"></div>
+            <div class="progress-marker start">&#52636;&#48156;</div>
+            <div class="progress-marker target">&#47785;&#54364;</div>
+        </div>
+    </div>
+
+    <div id="controls-panel" class="panel">
+        <h2>🥌 투구 컨트롤 (F·Δt)</h2>
+        <div class="control-group">
+            <label for="f-slider">미는 힘 (F): <span id="f-display">60</span> N</label>
+            <input type="range" id="f-slider" min="10" max="80" step="5" value="40">
+        </div>
+        <p style="font-size:0.95rem; color:#e32636; font-weight:bold; margin-bottom:8px; text-align:center;">
+            👇 화면을 꾹 누르고 있으면 출발합니다!
+        </p>
+
+        <details id="hint-box" style="margin-bottom:12px;background:rgba(255,211,0,0.07);border:1px solid rgba(255,211,0,0.3);border-radius:8px;padding:0;">
+            <summary style="padding:8px 12px;cursor:pointer;font-size:0.82rem;font-weight:800;color:#c9a800;letter-spacing:0.04em;list-style:none;display:flex;align-items:center;gap:6px;">
+                💡 투구 힌트 보기
+            </summary>
+            <div style="padding:8px 12px 10px;border-top:1px solid rgba(255,211,0,0.2);">
+                <div style="font-size:0.78rem;color:#666;margin-bottom:6px;">타겟까지 거리 <b>30 m</b> 기준</div>
+                <div style="background:rgba(0,0,0,0.04);border-radius:6px;padding:7px 10px;font-size:0.8rem;font-family:monospace;margin-bottom:7px;">
+                    K₀ ≥ Q = μ·m·g·d<br>
+                    K₀ ≥ <span id="hint-mu-val" style="color:#005eb8;font-weight:800;">0.008</span> × 20 × 9.81 × 30
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:5px;">
+                    <div style="flex:1;text-align:center;background:rgba(0,94,184,0.08);border-radius:6px;padding:5px 4px;">
+                        <div style="font-size:0.7rem;color:#888;">최소 초기 에너지</div>
+                        <div style="font-size:1rem;font-weight:900;color:#005eb8;" id="hint-kmin">47 J</div>
+                    </div>
+                    <div style="flex:1;text-align:center;background:rgba(0,94,184,0.08);border-radius:6px;padding:5px 4px;">
+                        <div style="font-size:0.7rem;color:#888;">최소 출발 속도</div>
+                        <div style="font-size:1rem;font-weight:900;color:#005eb8;" id="hint-vmin">2.2 m/s</div>
+                    </div>
+                </div>
+                <div style="font-size:0.75rem;color:#555;margin-bottom:4px;" id="hint-tip">F가 클수록 빠르게 가속, 오래 누를수록 속도 증가.</div>
+                <div style="font-size:0.73rem;color:#888;margin-bottom:3px;">💡 마커가 K 바를 향해 이동해요. K 바가 마커에 닿으면 손을 떼세요!</div>
+                <div style="font-size:0.73rem;color:#c96000;">🟠 투구선(주황선) 도달 시 자동 투구 — 그 전에 손을 떼세요!</div>
+            </div>
+        </details>
+
+        <button id="btn-reset" class="btn-reset">다시 준비 (Reset)</button>
+        <button id="btn-complete" style="display:none;width:100%;margin-top:8px;padding:10px;background:linear-gradient(135deg,#1d9e75,#147050);border:none;border-radius:6px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;">✓ 미션 완료</button>
+        <div class="toggle-wrap">
+            <input type="checkbox" id="toggle-vector" checked>
+            <label for="toggle-vector">물리 벡터 (힘/마찰력) 표시</label>
+        </div>
+    </div>
+
+    <div id="stats-panel" class="panel">
+        <div class="score-grid">
+            <div class="score-card"><b>ROUND</b><span id="game-round">1/5</span></div>
+            <div class="score-card"><b>SCORE</b><span id="game-score">0</span></div>
+            <div class="score-card"><b>SHOT</b><span id="shot-score">0</span></div>
+            <div class="score-card"><b>BEST</b><span id="best-score">0</span></div>
+        </div>
+        <div id="ice-quality-banner" style="display:flex;align-items:center;gap:8px;background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.35);border-radius:8px;padding:6px 10px;margin-bottom:10px;">
+            <span id="iq-emoji" style="font-size:1.1rem;">💎</span>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:0.7rem;font-weight:900;letter-spacing:0.06em;color:#888;">빙질 (라운드 <span id="iq-round">1</span>/5)</div>
+                <div style="font-size:0.85rem;font-weight:800;" id="iq-label">최상급</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:0.7rem;color:#888;">마찰계수 μ</div>
+                <div style="font-size:0.85rem;font-weight:800;" id="iq-mu">0.008</div>
+            </div>
+        </div>
+        <h2>Live Telemetry <span id="status-indicator">● READY</span></h2>
+        <div class="stat-row"><span>현재 속도 (v)</span><span class="stat-value"><span id="stat-v">0.00</span> m/s</span>
+        </div>
+        <div class="stat-row"><span>마찰력 (F)</span><span class="stat-value"><span id="stat-mu">0.00</span> N</span></div>
+        <div class="stat-row"><span>타겟까지 거리</span><span class="stat-value"><span id="stat-dist">30.00</span> m</span>
+        </div>
+
+        <div class="chart-container">
+            <div class="bar-label">
+                <span style="font-weight:800" id="bar-label-text">K (현재 누적)</span>
+                <span id="val-e0">목표: -- J+</span>
+            </div>
+            <div style="position:relative;">
+                <div class="bar-wrap" style="display:flex;overflow:hidden;border-radius:8px;height:18px;">
+                    <div id="bar-k" class="bar-fill" style="background:linear-gradient(90deg,#005eb8,#2c8bff);border-radius:8px 0 0 8px;flex-shrink:0;height:100%;"></div>
+                    <div id="bar-q" class="bar-fill" style="background:linear-gradient(90deg,#c0392b,#e74c3c);border-radius:0 8px 8px 0;flex-shrink:0;height:100%;"></div>
+                </div>
+                <div id="kmin-marker" style="display:none;position:absolute;top:0;bottom:0;width:2px;background:rgba(255,200,0,0.85);border-left:2px dashed rgba(255,200,0,0.85);pointer-events:none;"></div>
+                <div id="kmin-label" style="display:none;position:absolute;top:-17px;font-size:9px;color:#c9a800;font-weight:800;white-space:nowrap;transform:translateX(-50%);">목표</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:0.8rem;color:#444;font-weight:600;">
+                <span>■ 운동에너지 K: <span id="val-k">0 J</span></span>
+                <span>■ 마찰손실 Q: <span id="val-q">0 J</span></span>
+            </div>
+            <div style="margin-top:7px;font-size:0.76rem;color:#005eb8;font-weight:700;text-align:center;background:rgba(0,94,184,0.08);border-radius:6px;padding:5px 8px;border-left:3px solid #005eb8;">
+                K가 줄어드는 만큼 Q가 늘어납니다 — 에너지 전환
+            </div>
+        </div>
+
+        <div style="margin-top:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.68rem;font-weight:800;margin-bottom:3px;">
+                <span>■ <span style="color:#2c8bff">K</span>&ensp;■ <span style="color:#e74c3c">Q</span></span>
+                <span style="color:#888;letter-spacing:0.04em;">에너지-시간</span>
+            </div>
+            <canvas id="energy-time-graph" style="width:100%;height:52px;display:block;border-radius:6px;background:rgba(0,0,0,0.13);border:1px solid rgba(0,0,0,0.08);"></canvas>
+        </div>
+    </div>
+
+    <div id="round-history-panel" class="panel" style="top:30px;right:30px;width:180px;padding:12px 14px;">
+        <div style="font-size:0.72rem;font-weight:900;color:#005eb8;letter-spacing:0.08em;margin-bottom:8px;">SHOT HISTORY</div>
+        <div id="round-history"></div>
+    </div>
+
+    <div id="sweep-hint"></div>
+    <div id="flash-overlay"></div>
+    <div id="result-message">NICE SHOT!</div>
+    <div class="mission-back-slot">
+        <button class="mission-back-btn" type="button" data-mission-back aria-label="로비로 돌아가기">로비</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <script src="../progress.js"></script>
+    <script src="./mission-ui.js?v=5"></script>
+    <script src="./mission2.js"></script>
+    <script>
+        document.getElementById('mi-start').addEventListener('click', () => {
+            document.getElementById('mission-intro').classList.add('hidden');
+        });
+    </script>
+
+    <!-- 고정 힌트 버튼 (우상단) -->
+    <div style="position:fixed;top:8px;right:8px;z-index:9999;">
+        <button onclick="document.getElementById('m2-hint-overlay').classList.toggle('hint-visible')"
+            style="padding:5px 14px;background:rgba(255,180,0,.15);border:1px solid rgba(255,180,0,.45);border-radius:4px;color:#c9a800;font-size:12px;cursor:pointer;font-family:inherit;letter-spacing:.04em;">💡 물리 힌트</button>
+    </div>
+    <div id="m2-hint-overlay" style="display:none;position:fixed;top:40px;right:8px;z-index:9998;width:290px;background:rgba(6,10,24,.97);border:1px solid rgba(255,180,0,.4);border-radius:10px;padding:16px;font-size:13px;color:#f0f4ff;line-height:1.7;">
+        <div style="font-weight:900;color:#ffb347;margin-bottom:10px;font-size:14px;">💡 마찰 에너지 힌트</div>
+        <div style="background:rgba(255,180,0,.08);border-radius:6px;padding:8px 10px;font-family:monospace;margin-bottom:10px;">
+            Q = F × d = μmg × d<br>
+            K₀ = ½mv²  →  K₀ ≥ Q 필요
+        </div>
+        <div style="margin-bottom:6px;">🎯 화면을 <b>꾹 누를수록</b> 스톤 속도가 빨라져요.</div>
+        <div style="margin-bottom:6px;">🎯 <b>F 슬라이더</b>를 높이면 같은 시간에 더 강하게 가속</div>
+        <div style="margin-bottom:6px;">🧊 <b>스위핑</b>으로 빙판 마찰을 줄여 더 멀리 보낼 수 있어요.</div>
+        <div style="margin-bottom:6px;">📐 빙질이 나쁠수록(μ 큼) Q가 커져 스톤이 일찍 멈춰요.</div>
+        <div style="font-size:11px;color:#aaa;margin-top:8px;">다시 클릭하면 닫힙니다.</div>
+    </div>
+</body>
+
+</html>

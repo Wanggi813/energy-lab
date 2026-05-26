@@ -1,0 +1,158 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>미션 4 — 물리 감독</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<link rel="stylesheet" href="./mission4.css">
+<link rel="stylesheet" href="./mission-intro.css">
+<link rel="stylesheet" href="./mission-ui.css?v=4">
+</head>
+<body>
+<!-- 미션 인트로 -->
+<div id="mission-intro" class="mission-intro-overlay">
+  <div class="mi-card">
+    <div class="mi-header">
+      <span class="mi-number">Mission 04</span>
+      <h1 class="mi-title">챔피언십 — 에너지 총결산</h1>
+    </div>
+    <div class="mi-divider"></div>
+    <div class="mi-story">
+      <span class="mi-story-label">🏅 대회 당일</span>
+      <p>훈련은 끝났다. 하프파이프에서 에너지 보존을 익힌 서윤이 다이빙 플랫폼에 서고, 컬링 실험에서 마찰을 탐구한 지훈이 트랙 위에 선다. 번지점프로 탄성에너지를 체득한 민재가 장대를 들었다. 세 선수의 실전 고민을 함께 해결하라.</p>
+    </div>
+    <div class="mi-concept">
+      <div class="mi-concept-tag">오늘의 물리 개념</div>
+      <div class="mi-concept-name">🔬 에너지 보존 통합 점검</div>
+      <p class="mi-concept-desc">운동에너지, 위치에너지, 열에너지를 모두 포함하면 에너지의 총합은 항상 일정하다. 어떤 에너지도 갑자기 사라지거나 생겨나지 않는다.</p>
+      <div class="mi-formulas">
+        <div class="mi-formula">Ek + Ep + Q = E₀</div>
+        <div class="mi-formula-sub">
+          <span>Ek = 운동에너지</span>
+          <span>Ep = 위치에너지</span>
+          <span>Q = 열에너지</span>
+        </div>
+      </div>
+    </div>
+    <button class="mi-start-btn" id="mi-start">미션 시작 →</button>
+  </div>
+</div>
+
+<!-- 복도 복귀 -->
+<div class="mission-back-slot">
+  <button class="mission-back-btn" type="button" data-mission-back aria-label="로비로 돌아가기">로비</button>
+</div>
+
+<!-- ══ VISUAL NOVEL ══ -->
+<div id="phaseVN" class="phase active">
+  <canvas id="vnBgCanvas"></canvas>
+  <canvas id="vnCharCanvas"></canvas>
+  <div id="vnOverlay"></div>
+
+  <div id="vnHUD">
+    <span class="title">⚡ 미션 04 — 챔피언십 결전</span>
+    <div id="vnSceneTag">선수 <span id="vnSceneNum">1</span> / 4</div>
+    <div id="vnTrustGroup">
+      <span id="vnTrustLabel">신뢰도</span>
+      <div id="vnTrustTrack"><div id="vnTrustFill"></div></div>
+      <span id="vnTrustScore">0</span>
+    </div>
+  </div>
+
+  <div id="vnDialogue">
+    <div id="vnNameplate">narrator</div>
+    <div id="vnText"></div>
+    <span id="vnAdvanceBlink">▼ CLICK</span>
+  </div>
+
+  <div id="vnChoiceOverlay">
+    <div id="vnChoicePrompt">🎯 어떤 조언을 해줄까?</div>
+    <div id="vnChoiceList"></div>
+  </div>
+
+  <div id="vnTransition"></div>
+</div>
+
+<!-- ══ CUTSCENE ══ -->
+<div id="phaseCutscene" class="phase">
+  <div id="cutBox">
+    <div style="font-size:11px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase">구역 04 · 통합 정리</div>
+    <div id="slideContent">
+
+      <div class="slide active" id="c0">
+        <div class="char-row">
+          <div class="char-icon">⚡</div>
+          <div class="bubble">세 선수 모두 훌륭했습니다! 훈련에서 배운 에너지 법칙이 실전에서 그대로 빛났어요. 이제 개념을 하나로 정리해봅시다.</div>
+        </div>
+        <div class="three-cols">
+          <div class="concept-card">
+            <div class="icon">🏂</div>
+            <strong style="color:var(--blue)">서윤 · 미션 1</strong>
+            <span>하프파이프 훈련<br>Ek ↔ Ep 전환<br>mgh = ½mv²</span>
+          </div>
+          <div class="concept-card">
+            <div class="icon">🥌</div>
+            <strong style="color:var(--red)">지훈 · 미션 2</strong>
+            <span>컬링 마찰 실험<br>에너지 손실<br>Q = 마찰력 × d</span>
+          </div>
+          <div class="concept-card">
+            <div class="icon">🪂</div>
+            <strong style="color:var(--minjae)">민재 · 미션 3</strong>
+            <span>번지점프 설계<br>탄성 에너지<br>Es = ½kx²</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide" id="c1">
+        <div class="char-row">
+          <div class="char-icon">📐</div>
+          <div class="bubble">세 가지 에너지와 열에너지를 모두 합하면 항상 처음 에너지와 같습니다. 에너지는 절대 사라지지 않아요.</div>
+        </div>
+        <div class="formula-box">
+          <div class="formula">Ek + Ep + Es + Q = E₀</div>
+          <div class="formula-sub">
+            Ek: 운동 &nbsp;·&nbsp; Ep: 위치 &nbsp;·&nbsp; Es: 탄성 &nbsp;·&nbsp; Q: 열 &nbsp;·&nbsp; E₀: 처음 에너지
+          </div>
+        </div>
+      </div>
+
+      <div class="slide" id="c2">
+        <div class="char-row">
+          <div class="char-icon">🌌</div>
+          <div class="bubble">스포츠에서도, 우주에서도, 어디서나 에너지는 형태만 바뀝니다. 겉보기에 에너지가 사라진 것처럼 보여도, 언제나 다른 형태로 전환된 것이에요.</div>
+        </div>
+        <div style="background:rgba(45,232,160,.08);border:1px solid rgba(45,232,160,.3);border-radius:10px;padding:16px;text-align:center;">
+          <div style="font-size:20px;color:var(--teal);font-weight:700;letter-spacing:.04em">"에너지 보존 법칙"</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:8px">우주에서 가장 확실한 물리 법칙</div>
+        </div>
+      </div>
+
+      <div class="slide" id="c3">
+        <div class="char-row">
+          <div class="char-icon">🧪</div>
+          <div class="bubble">시뮬레이션에서 진자, 롤러코스터, 번지점프 세 상황의 에너지 합이 항상 일정함을 직접 확인해보세요!</div>
+        </div>
+      </div>
+
+    </div>
+    <div id="slideNav">
+      <span id="slideCounter">1 / 4</span>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" id="btnPrev">← 이전</button>
+        <button class="btn btn-primary" id="btnNext">다음 →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="../progress.js"></script>
+<script src="./mission-ui.js?v=5"></script>
+<script src="./mission4.js?v=2"></script>
+<script>
+  document.getElementById('mi-start').addEventListener('click', () => {
+    document.getElementById('mission-intro').classList.add('hidden');
+  });
+</script>
+</body>
+</html>

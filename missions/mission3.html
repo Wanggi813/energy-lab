@@ -1,0 +1,204 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>미션 3 - 번지점프 구조 설계</title>
+  <link rel="stylesheet" href="./mission3.css">
+  <link rel="stylesheet" href="./mission-intro.css">
+  <link rel="stylesheet" href="./mission-ui.css?v=4">
+</head>
+
+<body>
+  <!-- 미션 인트로 -->
+  <div id="mission-intro" class="mission-intro-overlay">
+    <div class="mi-card">
+      <div class="mi-header">
+        <span class="mi-number">Mission 03</span>
+        <h1 class="mi-title">번지점프 구조 설계</h1>
+      </div>
+      <div class="mi-divider"></div>
+      <div class="mi-story">
+        <span class="mi-story-label">🔬 실험 목표</span>
+        <p>번지점프 설계사로서 선수들에게 최적의 점프 환경을 제공하라. 줄의 탄성계수와 길이를 조절하며 위치에너지, 운동에너지, 탄성에너지의 전환 원리를 탐구하라.</p>
+      </div>
+      <div class="mi-concept">
+        <div class="mi-concept-tag">오늘의 물리 개념</div>
+        <div class="mi-concept-name">🌀 탄성 위치에너지</div>
+        <p class="mi-concept-desc">늘어난 줄에 에너지가 저장된다. 위치에너지(Ep), 운동에너지(Ek), 탄성에너지(Ee) 세 가지가 서로 전환되며 총합은 항상 일정하다.</p>
+        <div class="mi-formulas">
+          <div class="mi-formula">Ep + Ek + Ee = 일정</div>
+          <div class="mi-formula-sub">
+            <span>Ee = ½kx²</span>
+            <span>x = 줄 늘어남</span>
+          </div>
+        </div>
+      </div>
+      <button class="mi-start-btn" id="mi-start">미션 시작 →</button>
+    </div>
+  </div>
+
+  <!-- 복도 복귀 -->
+  <div class="mission-back-slot">
+    <button class="mission-back-btn" type="button" data-mission-back aria-label="로비로 돌아가기">로비</button>
+  </div>
+
+  <main class="mission">
+    <!-- 좌 패널: 손님 인적사항 + 요구사항 -->
+    <aside class="panel-left">
+      <div class="left-header">
+        <span class="left-title">손님 정보</span>
+        <div class="round-dots" id="round-dots">
+          <span class="rd rd-active">1</span>
+          <span class="rd">2</span>
+          <span class="rd">3</span>
+        </div>
+      </div>
+
+      <section class="card client-card">
+        <div class="cc-row1">
+          <span class="cc-avatar" id="cc-avatar">🏃</span>
+          <div>
+            <div class="cc-nameline">
+              <strong id="cc-name">김지수</strong>
+              <span id="cc-age">28세 · 60 kg</span>
+            </div>
+            <span class="cc-tag" id="cc-tag" style="background:var(--green)">안전 우선</span>
+          </div>
+        </div>
+        <p class="cc-quote" id="cc-quote">"첫 번지점프예요! 안전하게만 해주세요."</p>
+      </section>
+
+      <section class="card">
+        <div class="card-title">요구사항</div>
+        <div class="status-list">
+          <div class="status"><span>최저점 여유</span><strong id="safe-clearance">4.0 m 이상</strong></div>
+          <div class="status" style="color:var(--yellow)"><span>이상적 여유 ★</span><strong id="safe-ideal" style="color:var(--yellow)">6.0 m</strong></div>
+          <div class="status"><span>이론 최저점 ◈</span><strong id="predict-clearance" style="color:var(--muted)">--</strong></div>
+          <div class="status"><span>최대 G</span><strong id="safe-g">5.5 G 이하</strong></div>
+          <div class="status" id="min-g-row" hidden><span>최소 G (스릴)</span><strong id="safe-min-g">-- G 이상</strong></div>
+          <div class="status"><span>체중</span><strong id="safe-mass">60 kg</strong></div>
+          <div class="status"><span>시도 횟수</span><strong id="attempt-count">0회</strong></div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- 중앙: 시뮬레이션 캔버스 -->
+    <section class="stage">
+      <canvas id="sim-canvas"></canvas>
+      <div class="event-card" id="event-text">줄의 길이와 탄성을 조절해 안전한 번지점프를 설계하세요.</div>
+      <div class="modal" id="result-modal">
+        <div class="modal-box">
+          <h2 id="result-title">결과</h2>
+          <p id="result-copy">분석 결과가 여기에 표시됩니다.</p>
+          <div class="modal-actions">
+            <button id="modal-again">다시 설계</button>
+            <button id="modal-close" class="primary">계속 보기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 라운드 완료 / 최종 점수 오버레이 -->
+      <div class="round-end" id="round-end">
+        <div class="re-box">
+          <div class="re-kicker" id="re-kicker">라운드 1 / 3 완료</div>
+          <div class="re-headline" id="re-headline">김지수 설계 성공!</div>
+          <div class="re-score-wrap">
+            <span class="re-score-num" id="re-score-num">85</span>
+            <span class="re-score-unit">점 / 333</span>
+          </div>
+          <div class="re-breakdown" id="re-breakdown"></div>
+          <div class="re-accum" id="re-accum">누적 85 / 333점</div>
+          <div class="re-grade-row" id="re-grade-row" hidden>
+            <span class="re-grade" id="re-grade">A</span>
+            <div class="re-grade-label" id="re-grade-label">합계 690 / 999점</div>
+            <table class="re-grade-table">
+              <thead><tr><th>손님</th><th>정밀도</th><th>G점수</th><th>패널티</th><th>합계</th></tr></thead>
+              <tbody id="re-grade-table"></tbody>
+            </table>
+          </div>
+          <div class="re-actions">
+            <button id="re-retry-btn" style="display:none">↺ 전체 재도전</button>
+            <button class="primary" id="re-next-btn">다음 손님 →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 우 패널: 설계 조건 + 에너지 + 버튼 -->
+    <aside class="panel">
+      <header>
+        <h1>번지점프 설계사</h1>
+        <div class="panel-top">
+          <button id="practice-btn" style="flex-shrink:0;padding:4px 10px;font-size:0.75rem;min-height:0;border-radius:20px;border:1px solid rgba(48,213,255,0.28)">🎯 연습 모드</button>
+        </div>
+        <p class="subtitle">줄의 탄성과 길이를 설정하고 낙하를 시작하세요.</p>
+      </header>
+
+      <section class="card">
+        <div class="card-title">설계 조건 <span id="design-badge">대기 중</span></div>
+        <div class="range-row">
+          <label for="k-input">줄의 탄성 계수 k</label>
+          <strong><span id="k-value">0</span> N/m</strong>
+          <input id="k-input" type="range" min="0" max="800" value="0" step="5">
+        </div>
+        <div class="range-row">
+          <label for="l-input">줄의 원래 길이 L</label>
+          <strong><span id="l-value">0</span> m</strong>
+          <input id="l-input" type="range" min="0" max="38" value="0" step="1">
+        </div>
+        <div class="toggle">
+          <span>공기 저항</span>
+          <label class="switch">
+            <input id="drag-input" type="checkbox" checked>
+            <span class="switch-track"></span>
+          </label>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">에너지 전환</div>
+        <div class="bars">
+          <div class="bar-row"><span style="color:var(--yellow)">Ep</span><div class="bar-bg"><div id="pe-bar" class="bar-fill" style="background:var(--yellow)"></div></div><strong id="pe-value">0 J</strong></div>
+          <div class="bar-row"><span style="color:var(--green)">Ek</span><div class="bar-bg"><div id="ke-bar" class="bar-fill" style="background:var(--green)"></div></div><strong id="ke-value">0 J</strong></div>
+          <div class="bar-row"><span style="color:var(--red)">Ee</span><div class="bar-bg"><div id="ee-bar" class="bar-fill" style="background:var(--red)"></div></div><strong id="ee-value">0 J</strong></div>
+          <div class="bar-row"><span style="color:var(--purple)">총합</span><div class="bar-bg"><div id="me-bar" class="bar-fill" style="background:var(--purple)"></div></div><strong id="me-value">0 J</strong></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">실시간 그래프</div>
+        <canvas id="energy-graph"></canvas>
+      </section>
+
+      <section class="card replay-card" id="replay-card" hidden>
+        <div class="card-title">리플레이 분석 <span id="replay-label">0.0 s</span></div>
+        <div class="replay-row">
+          <span>되감기</span>
+          <strong>Ep → Ek → Ee</strong>
+          <input id="replay-slider" type="range" min="0" max="0" value="0" step="1" disabled>
+        </div>
+      </section>
+
+      <div class="buttons">
+        <button id="start-btn" class="primary">낙하 시작</button>
+        <button id="reset-btn">초기화</button>
+        <button id="complete-btn" class="locked" style="grid-column:1/-1">미션 완료 (3라운드 후 해금)</button>
+      </div>
+    </aside>
+  </main>
+
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script src="../progress.js"></script>
+  <script src="./mission-ui.js?v=5"></script>
+  <script src="../simulations/jumper3d.js"></script>
+  <script src="./mission3.js"></script>
+  <script>
+    document.getElementById('mi-start').addEventListener('click', () => {
+      document.getElementById('mission-intro').classList.add('hidden');
+    });
+  </script>
+</body>
+
+</html>
