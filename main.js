@@ -780,7 +780,7 @@ function openRankModal() {
   renderMyScorePanel();
   el.rankModal.classList.remove('hidden');
   el.rankPostSave.classList.add('hidden');
-  renderRanks();
+  fetchRanks();
   requestAnimationFrame(() => {
     el.rankName.focus();
     el.rankName.select();
@@ -792,13 +792,31 @@ function closeRankModal() {
   state.keys.clear();
 }
 
+const RANKING_API = '/api/ranking';
+let rankCache = null; // 서버에서 받아온 랭킹 캐시
+
 function readRanks() {
+  if (rankCache !== null) return rankCache;
   try {
     const ranks = JSON.parse(localStorage.getItem(RANK_KEY));
     return Array.isArray(ranks) ? ranks : [];
   } catch (_) {
     return [];
   }
+}
+
+async function fetchRanks() {
+  el.rankList.innerHTML = '<p class="empty-rank">불러오는 중...</p>';
+  try {
+    const r = await fetch(RANKING_API);
+    if (!r.ok) throw new Error('fetch failed');
+    const data = await r.json();
+    rankCache = Array.isArray(data) ? data : [];
+    localStorage.setItem(RANK_KEY, JSON.stringify(rankCache));
+  } catch (_) {
+    rankCache = readRanks(); // 실패 시 로컬 캐시 사용
+  }
+  renderRanks();
 }
 
 const GRADE_CONFIG = [
@@ -874,16 +892,38 @@ function renderRanks() {
   }).join('');
 }
 
-function saveRank() {
+async function saveRank() {
   loadProgress();
   const name = el.rankName.value.trim() || '코치';
   const missions = MISSIONS.map(m => getMissionRecord(m.id).score || 0);
   const total = getTotalScore();
-  const ranks = readRanks();
-  const prevBest = ranks.reduce((m, r) => Math.max(m, Number(r.score || 0)), 0);
-  ranks.push({ name, score: total, missions, savedAt: new Date().toISOString() });
-  localStorage.setItem(RANK_KEY, JSON.stringify(ranks));
-  renderRanks();
+  const prevBest = readRanks().reduce((m, r) => Math.max(m, Number(r.score || 0)), 0);
+  const entry = { name, score: total, missions, savedAt: new Date().toISOString() };
+
+  el.saveRank.disabled = true;
+  el.saveRank.textContent = '저장 중...';
+
+  try {
+    const r = await fetch(RANKING_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry),
+    });
+    if (!r.ok) throw new Error('save failed');
+    rankCache = null; // 캐시 무효화 → 재조회
+    await fetchRanks();
+  } catch (_) {
+    // 서버 실패 시 로컬에만 저장
+    const ranks = readRanks();
+    ranks.push(entry);
+    rankCache = ranks;
+    localStorage.setItem(RANK_KEY, JSON.stringify(ranks));
+    renderRanks();
+  } finally {
+    el.saveRank.disabled = false;
+    el.saveRank.textContent = '이 점수 저장';
+  }
+
   el.rankPostSave.classList.toggle('hidden', total <= 0);
 
   if (total > prevBest && total > 0) {
