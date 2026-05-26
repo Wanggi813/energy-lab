@@ -21,7 +21,15 @@ const CONCEPTS = [
     training: '하프파이프 훈련',
     concept: '에너지 보존',
     formula: 'Ek + Ep = 일정',
-    desc: '높이가 낮아질수록 속도가 빨라진다. 위치에너지와 운동에너지의 합은 항상 보존된다.',
+    formulaSub: 'Ek = ½mv²   Ep = mgh',
+    variables: [
+      { sym: 'm', desc: '질량 (kg)' },
+      { sym: 'v', desc: '속도 (m/s)' },
+      { sym: 'g = 9.8', desc: '중력 가속도 (m/s²)' },
+      { sym: 'h', desc: '기준점에서의 높이 (m)' },
+    ],
+    flow: 'Ep(최대) → Ek(최대) → Ep(최대) → …',
+    desc: '마찰이 없을 때 위치에너지와 운동에너지의 합은 항상 일정하다. 높이가 낮아질수록 속도가 빨라지고, 올라갈수록 속도가 줄어든다.',
     color: '#4fc3ff'
   },
   {
@@ -30,8 +38,16 @@ const CONCEPTS = [
     icon: '🥌',
     training: '컬링 마찰 실험',
     concept: '마찰 에너지 손실',
-    formula: 'Q = 마찰력 × d',
-    desc: '마찰력은 운동에너지를 열에너지로 전환한다. 마찰력이 클수록, 이동 거리가 길수록 손실이 커진다.',
+    formula: 'Q = F × d',
+    formulaSub: 'F = μmg   역학적에너지 = Ek - Q',
+    variables: [
+      { sym: 'F', desc: '마찰력 (N)' },
+      { sym: 'd', desc: '이동 거리 (m)' },
+      { sym: 'μ', desc: '마찰 계수 (단위 없음)' },
+      { sym: 'Q', desc: '열에너지 손실 (J)' },
+    ],
+    flow: 'Ek(출발) → Ek(남음) + Q(열)',
+    desc: '마찰력은 운동에너지를 열에너지로 전환한다. 마찰력이 클수록, 이동 거리가 길수록 에너지 손실이 커진다.',
     color: '#ff6b6b'
   },
   {
@@ -41,7 +57,14 @@ const CONCEPTS = [
     training: '번지점프 설계',
     concept: '탄성 위치에너지',
     formula: 'Es = ½kx²',
-    desc: '늘어난 줄에 탄성에너지가 저장된다. Ep → Ek → Es → Ek → Ep 전환이 반복된다.',
+    formulaSub: 'Ep + Ek + Es = 일정',
+    variables: [
+      { sym: 'k', desc: '탄성 계수 (N/m)' },
+      { sym: 'x', desc: '줄 늘어난 길이 (m)' },
+      { sym: 'Es', desc: '탄성 위치에너지 (J)' },
+    ],
+    flow: 'Ep → Ek → Es → Ek → Ep → …',
+    desc: '늘어난 줄에 탄성에너지가 저장된다. 낙하 시 위치에너지가 운동에너지와 탄성에너지로 나뉘며, 세 에너지의 합은 보존된다.',
     color: '#45d18c'
   },
   {
@@ -51,7 +74,16 @@ const CONCEPTS = [
     training: '챔피언십 종합',
     concept: '에너지 보존 통합',
     formula: 'Ek + Ep + Es + Q = E₀',
-    desc: '모든 형태의 에너지를 합하면 항상 처음 에너지와 같다. 에너지는 사라지지 않는다.',
+    formulaSub: '어떤 에너지도 사라지지 않는다',
+    variables: [
+      { sym: 'Ek', desc: '운동에너지 (J)' },
+      { sym: 'Ep', desc: '위치에너지 (J)' },
+      { sym: 'Es', desc: '탄성에너지 (J)' },
+      { sym: 'Q', desc: '열에너지 (마찰 손실, J)' },
+      { sym: 'E₀', desc: '처음 역학적 에너지 (J)' },
+    ],
+    flow: '어떤 형태로든 전환되며, 총합 E₀는 불변',
+    desc: '운동·위치·탄성·열에너지를 모두 더하면 항상 처음 에너지와 같다. 에너지는 형태만 바뀔 뿐 절대 사라지지 않는다.',
     color: '#f3c451'
   }
 ];
@@ -357,24 +389,200 @@ function closeNotebookModal() {
   el.openNotebook.focus();
 }
 
+function downloadCertificate() {
+  loadProgress();
+  const name = (el.rankName && el.rankName.value.trim()) || '탐구자';
+  const total = getTotalScore();
+  const grade = getGrade(total);
+  const missions = MISSIONS.map(m => getMissionRecord(m.id));
+  const dateStr = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const W = 900, H = 640;
+  const cvs = document.createElement('canvas');
+  cvs.width = W; cvs.height = H;
+  const ctx = cvs.getContext('2d');
+
+  // 배경
+  ctx.fillStyle = '#07101d';
+  ctx.fillRect(0, 0, W, H);
+
+  // 테두리 글로우
+  ctx.strokeStyle = grade.color;
+  ctx.lineWidth = 3;
+  ctx.shadowColor = grade.color;
+  ctx.shadowBlur = 18;
+  ctx.strokeRect(18, 18, W - 36, H - 36);
+  ctx.shadowBlur = 0;
+
+  // 상단 로고
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 13px Courier New';
+  ctx.textAlign = 'center';
+  ctx.fillText('PHYSICAL ENERGY LAB', W / 2, 60);
+
+  ctx.fillStyle = 'rgba(200,230,255,0.45)';
+  ctx.font = '11px Courier New';
+  ctx.fillText('선수 성장 연구소', W / 2, 80);
+
+  // 구분선
+  ctx.strokeStyle = `${grade.color}66`;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(60, 95); ctx.lineTo(W - 60, 95); ctx.stroke();
+
+  // 인증서 제목
+  ctx.fillStyle = grade.color;
+  ctx.shadowColor = grade.color;
+  ctx.shadowBlur = 12;
+  ctx.font = 'bold 28px Malgun Gothic, Apple SD Gothic Neo, sans-serif';
+  ctx.fillText('에너지 탐구 완료 인증서', W / 2, 148);
+  ctx.shadowBlur = 0;
+
+  // 이름
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 42px Malgun Gothic, Apple SD Gothic Neo, sans-serif';
+  ctx.fillText(name, W / 2, 218);
+
+  ctx.fillStyle = 'rgba(168,189,208,0.8)';
+  ctx.font = '14px Malgun Gothic, Apple SD Gothic Neo, sans-serif';
+  ctx.fillText('위 탐구자는 물리 에너지 실험 4개 미션을 수행하고 에너지 보존 법칙을 체득하였음을 인증합니다.', W / 2, 248);
+
+  // 구분선
+  ctx.strokeStyle = 'rgba(200,230,255,0.15)';
+  ctx.beginPath(); ctx.moveTo(60, 268); ctx.lineTo(W - 60, 268); ctx.stroke();
+
+  // 미션별 점수
+  const missionColors = ['#4fc3ff', '#ff6b6b', '#45d18c', '#f3c451'];
+  const missionIcons  = ['🏂', '🥌', '🪂', '🏅'];
+  const missionNames  = ['하프파이프', '마찰 실험', '번지점프', '챔피언십'];
+  const colW = (W - 120) / 4;
+
+  missions.forEach((m, i) => {
+    const x = 60 + i * colW + colW / 2;
+    const s = m.score || 0;
+    const pct = s / 1000;
+    const col = missionColors[i];
+
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.beginPath();
+    ctx.roundRect(60 + i * colW + 8, 280, colW - 16, 160, 8);
+    ctx.fill();
+
+    ctx.font = '22px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(missionIcons[i], x, 316);
+
+    ctx.fillStyle = col;
+    ctx.font = `bold 11px Courier New`;
+    ctx.fillText(`MISSION ${i + 1}`, x, 336);
+
+    ctx.fillStyle = 'rgba(200,230,255,0.6)';
+    ctx.font = `10px Malgun Gothic, sans-serif`;
+    ctx.fillText(missionNames[i], x, 352);
+
+    // 점수 바
+    const bx = 60 + i * colW + 20, bw = colW - 40, bh = 6, by = 364;
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 3); ctx.fill();
+    if (pct > 0) {
+      ctx.fillStyle = col;
+      ctx.shadowColor = col; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.roundRect(bx, by, bw * pct, bh, 3); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.fillStyle = m.status === 'clear' ? col : 'rgba(168,189,208,0.4)';
+    ctx.font = `bold 20px Courier New`;
+    ctx.fillText(s, x, 406);
+
+    ctx.fillStyle = 'rgba(168,189,208,0.5)';
+    ctx.font = `9px Courier New`;
+    ctx.fillText('/ 1000', x, 420);
+  });
+
+  // 총점 & 등급
+  ctx.strokeStyle = 'rgba(200,230,255,0.15)';
+  ctx.beginPath(); ctx.moveTo(60, 460); ctx.lineTo(W - 60, 460); ctx.stroke();
+
+  ctx.fillStyle = grade.color;
+  ctx.shadowColor = grade.color; ctx.shadowBlur = 16;
+  ctx.font = `bold 52px Courier New`;
+  ctx.textAlign = 'center';
+  ctx.fillText(grade.label, W / 2 - 80, 530);
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold 36px Courier New`;
+  ctx.fillText(total.toLocaleString('ko-KR'), W / 2 + 40, 520);
+
+  ctx.fillStyle = 'rgba(168,189,208,0.6)';
+  ctx.font = `12px Courier New`;
+  ctx.fillText('/ 4,000 pt', W / 2 + 40, 540);
+
+  // 날짜
+  ctx.fillStyle = 'rgba(168,189,208,0.45)';
+  ctx.font = `11px Malgun Gothic, Apple SD Gothic Neo, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText(dateStr, W / 2, 590);
+
+  // 다운로드
+  const link = document.createElement('a');
+  link.download = `energy-lab-${name}-${dateStr}.png`;
+  link.href = cvs.toDataURL('image/png');
+  link.click();
+}
+
+
 function renderNotebook() {
   el.notebookCards.innerHTML = CONCEPTS.map(c => {
-    const cleared = getMissionRecord(c.missionId).status === 'clear';
-    if (cleared) {
-      return `
-        <div class="notebook-card" style="border-color:${c.color}55;background:${c.color}12">
-          <span class="nb-icon">${c.icon}</span>
-          <span class="nb-athlete" style="color:${c.color}">${c.athlete} · ${c.training}</span>
-          <span class="nb-concept">${c.concept}</span>
-          <span class="nb-formula" style="color:${c.color};background:${c.color}1a">${c.formula}</span>
-          <span class="nb-desc">${c.desc}</span>
-        </div>`;
-    }
-    return `
-      <div class="notebook-card is-locked">
-        <span class="nb-icon">🔒</span>
-        <span class="nb-concept">미션 ${c.missionId} 잠김</span>
+    const rec = getMissionRecord(c.missionId);
+    const cleared = rec.status === 'clear';
+
+    if (!cleared) {
+      return `<div class="nb-flip-card nb-locked-card" style="--c:${c.color}">
+        <div class="nb-locked-icon">🔒</div>
+        <span class="nb-locked-mission">MISSION 0${c.missionId}</span>
         <span class="nb-locked-label">클리어하면 기록됩니다</span>
+      </div>`;
+    }
+
+    const mScore = rec.score || 0;
+    const tagsHtml = (c.variables || []).map(v =>
+      `<span class="nb-tag"><em>${escapeHtml(v.sym)}</em><span class="nb-tag-desc">${escapeHtml(v.desc)}</span></span>`
+    ).join('');
+
+    return `
+      <div class="nb-flip-card" data-mission="${c.missionId}" style="--c:${c.color}">
+        <div class="nb-flip-inner">
+
+          <div class="nb-flip-front">
+            <span class="nb-mission-num">0${c.missionId}</span>
+            <div class="nb-front-header">
+              <div class="nb-icon-wrap">${c.icon}</div>
+              <div>
+                <span class="nb-concept-label">${escapeHtml(c.concept)}</span>
+                <span class="nb-training">${escapeHtml(c.training)}</span>
+              </div>
+            </div>
+            <div class="nb-formula-block-new">
+              <div class="nb-formula-big">${escapeHtml(c.formula)}</div>
+              ${c.formulaSub ? `<div class="nb-formula-sub-text">${escapeHtml(c.formulaSub)}</div>` : ''}
+            </div>
+            <div class="nb-score-display">
+              <span class="nb-score-num">${mScore}</span>
+              <span class="nb-score-unit">pt / 1,000</span>
+            </div>
+            <span class="nb-flip-hint">탭해서 자세히 보기 ↻</span>
+          </div>
+
+          <div class="nb-flip-back">
+            <span class="nb-back-header">${escapeHtml(c.concept)}</span>
+            ${tagsHtml ? `<div class="nb-tag-grid">${tagsHtml}</div>` : ''}
+            ${c.flow ? `<div class="nb-flow">${escapeHtml(c.flow)}</div>` : ''}
+            <p class="nb-desc">${escapeHtml(c.desc)}</p>
+            <span class="nb-flip-hint">↻ 돌아가기</span>
+          </div>
+
+        </div>
       </div>`;
   }).join('');
 }
@@ -1122,6 +1330,11 @@ function bindInput() {
 
   el.openNotebook.addEventListener('click', openNotebookModal);
   el.closeNotebook.addEventListener('click', closeNotebookModal);
+  document.getElementById('downloadCert').addEventListener('click', downloadCertificate);
+  el.notebookCards.addEventListener('click', e => {
+    const card = e.target.closest('.nb-flip-card[data-mission]');
+    if (card) card.classList.toggle('is-flipped');
+  });
   el.notebookModal.addEventListener('click', event => {
     if (event.target === el.notebookModal) closeNotebookModal();
   });
