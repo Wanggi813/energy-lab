@@ -5,10 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>선수 성장 연구소</title>
   <link rel="stylesheet" href="style.css?v=4">
+  <script>if(new URLSearchParams(location.search).get('back')==='1')document.documentElement.classList.add('is-returning');</script>
 </head>
 <body>
-  <!-- 인트로 화면 -->
-  <div id="intro-screen">
+  <!-- 로딩 화면 -->
+  <div id="loading-screen">
+    <div id="loading-content">
+      <div class="loading-logo">Physical Energy Lab</div>
+      <div class="loading-sub">선수 성장 연구소</div>
+      <div class="loading-bar-wrap">
+        <div id="loading-bar"></div>
+      </div>
+      <div id="loading-text">로딩 중... 0%</div>
+    </div>
+  </div>
+
+  <!-- 인트로 화면 (로딩 완료 후 표시) -->
+  <div id="intro-screen" class="hidden">
     <img src="image/인트로.png" alt="선수 성장 연구소" id="intro-image">
     <div id="intro-title">
       <span class="intro-title-main">Physical Energy Lab</span>
@@ -132,16 +145,59 @@
   <script src="main.js?v=8"></script>
   <script>
     (function () {
-      const back = new URLSearchParams(location.search).get('back') === '1';
-      const screen = document.getElementById('intro-screen');
-      if (back) {
-        screen.classList.add('hidden');
-      } else {
-        document.getElementById('intro-enter').addEventListener('click', () => {
-          screen.style.opacity = '0';
-          setTimeout(() => screen.classList.add('hidden'), 500);
-        });
+      if (document.documentElement.classList.contains('is-returning')) return;
+
+      const loadingEl = document.getElementById('loading-screen');
+      const introEl   = document.getElementById('intro-screen');
+
+      const PRELOAD = [
+        'image/인트로.png',
+        'image/기초.png',
+        'image/동계.png',
+        'image/번지.png',
+        'image/숙소.png',
+        'image/랭킹.png',
+        'image/코치-idle.png',
+        'image/코치-walk.png',
+      ];
+
+      let loaded = 0;
+      const total = PRELOAD.length;
+      const barEl  = document.getElementById('loading-bar');
+      const textEl = document.getElementById('loading-text');
+
+      function onLoad() {
+        loaded++;
+        const pct = Math.round(loaded / total * 100);
+        barEl.style.width = pct + '%';
+        textEl.textContent = '로딩 중... ' + pct + '%';
+
+        if (loaded >= total) {
+          loadingEl.style.opacity = '0';
+          setTimeout(() => {
+            loadingEl.classList.add('hidden');
+            introEl.style.opacity = '0';
+            introEl.classList.remove('hidden');
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+              introEl.style.transition = 'opacity 0.7s ease';
+              introEl.style.opacity = '1';
+            }));
+          }, 400);
+        }
       }
+
+      PRELOAD.forEach(src => {
+        const img = new Image();
+        img.onload = onLoad;
+        img.onerror = onLoad;
+        img.src = src;
+      });
+
+      document.getElementById('intro-enter').addEventListener('click', () => {
+        introEl.style.transition = 'opacity 0.5s ease';
+        introEl.style.opacity = '0';
+        setTimeout(() => introEl.classList.add('hidden'), 500);
+      });
     })();
   </script>
 </body>
