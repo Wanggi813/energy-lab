@@ -92,6 +92,7 @@ const flakes = Array.from({ length: 90 }, (_, i) => ({
 
 let raf = null;
 let lastTs = 0;
+
 let view = { w: 0, h: 0, scale: 1, cx: 0, base: 0 };
 const THREE_PIPE_LENGTH = 78;
 const T3 = {
@@ -368,6 +369,7 @@ function landOnPipe(x, surface) {
   const rotations = state.rotation / (Math.PI * 2);
   if (quality > 0.36) {
     state.landings += 1;
+    if (rotations >= 2 && window.ElabBadges) window.ElabBadges.unlockWithToast('spin720');
     const landingScore = scoreLandingAction({
       quality,
       rotations,
@@ -652,8 +654,10 @@ function loop(ts) {
   if (!lastTs) lastTs = ts;
   const dt = Math.min(0.033, (ts - lastTs) / 1000);
   lastTs = ts;
+
   update(dt);
   draw();
+
   raf = requestAnimationFrame(loop);
 }
 
@@ -700,10 +704,25 @@ function bindControls() {
     }
     const missionScore = ElabProgress.clampScore(Math.round(state.score / 40));
     ElabProgress.saveMission(1, 'clear', missionScore);
-    MissionUI.showClearAndReturn({
-      score: missionScore,
-      formula: 'Ek + Ep = 일정',
-      desc: '에너지 보존 - 높이↑ 속도↓, 높이↓ 속도↑'
+    if (window.ElabBadges) window.ElabBadges.unlockWithToast('conserve');
+    MissionUI.askCoachQuestion({
+      speaker: '코치 확인 퀴즈',
+      question: '파이프 바닥에서 라이더 속도가 가장 빠른 이유는?',
+      choices: [
+        { label: 'Ek + Ep = 일정이라, 높이(Ep)가 낮을수록 속도(Ek)가 커진다', correct: true,
+          feedback: '맞아. Ep = mgh가 줄어드는 만큼 Ek = ½mv²가 늘어나. 총합은 항상 일정해.' },
+        { label: '마찰이 없어서 에너지가 새로 만들어지기 때문이다', correct: false,
+          feedback: '새 에너지가 생기는 게 아니야. Ep가 Ek로 모습을 바꾸는 거야.' },
+        { label: '무거울수록 아래에서 더 빠르게 움직이기 때문이다', correct: false,
+          feedback: '질량은 속도에 직접 영향을 주지 않아. Ep와 Ek의 전환이 속도를 결정해.' }
+      ],
+      continueLabel: '미션 완료 →'
+    }).then(() => {
+      MissionUI.showClearAndReturn({
+        score: missionScore,
+        formula: 'Ek + Ep = 일정',
+        desc: '에너지 보존 - 높이↑ 속도↓, 높이↓ 속도↑'
+      });
     });
   });
   ui.friction.addEventListener('input', updateUi);

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>일과 에너지</title>
+    <title>Energy Lab — 일과 에너지</title>
     <meta name="description" content="힘과 변위가 만드는 일, 위치에너지와 운동에너지의 변화를 함께 확인하는 역학 시뮬레이션입니다.">
     <link rel="stylesheet" href="./mission2.css">
     <link rel="stylesheet" href="./mission-ui.css?v=4">
@@ -15,8 +15,8 @@
     <div id="mission-intro" class="mission-intro-overlay">
       <div class="mi-card">
         <div>
-          <div class="mi-number">Mission 02</div>
-          <h1 class="mi-title" style="margin:6px 0 0">일과 에너지 — 마찰 탐구</h1>
+          <span class="mi-number">Mission 02</span>
+          <h1 class="mi-title" style="margin:6px 0 0">일과 에너지 — 마찰 손실</h1>
         </div>
         <div class="mi-divider"></div>
         <div>
@@ -163,7 +163,7 @@
         </div>
     </div>
 
-    <div id="round-history-panel" class="panel" style="top:30px;right:30px;width:180px;padding:12px 14px;">
+    <div id="round-history-panel" class="panel" style="bottom:24px;right:24px;width:180px;padding:12px 14px;">
         <div style="font-size:0.72rem;font-weight:900;color:#005eb8;letter-spacing:0.08em;margin-bottom:8px;">SHOT HISTORY</div>
         <div id="round-history"></div>
     </div>
@@ -176,6 +176,7 @@
     </div>
     <canvas id="gameCanvas"></canvas>
     <script src="../progress.js"></script>
+    <script src="../badges.js"></script>
     <script src="./mission-ui.js?v=5"></script>
     <script src="./mission2.js"></script>
     <script>

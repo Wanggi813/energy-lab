@@ -782,11 +782,13 @@ function skipType() {
 
 function setNameplate(speaker) {
   const np = document.getElementById('vnNameplate');
+  const phaseEl = document.getElementById('phaseVN');
   if (!speaker) {
     np.style.background = 'rgba(80,80,100,.3)';
     np.style.color = 'rgba(180,180,220,.7)';
     np.style.borderColor = 'rgba(120,120,160,.2)';
     np.textContent = '— 내레이터 —';
+    phaseEl.style.setProperty('--vn-char-color', 'rgba(120,140,200,.5)');
     return;
   }
   const colors = { '서윤': '#4aaddd', '지훈': '#e06060', '민재': '#5dbc5d' };
@@ -795,6 +797,7 @@ function setNameplate(speaker) {
   np.style.color = col;
   np.style.borderColor = `rgba(${hexToRgb(col)}, .4)`;
   np.textContent = speaker;
+  phaseEl.style.setProperty('--vn-char-color', col);
 }
 
 function hexToRgb(hex) {
@@ -901,6 +904,7 @@ function selectChoice(idx) {
     np.style.color = '#ff8080';
     np.style.borderColor = 'rgba(255,80,80,.3)';
     np.textContent = '— 물리 해설 —';
+    document.getElementById('phaseVN').style.setProperty('--vn-char-color', '#ff8080');
     document.getElementById('vnText').textContent = `💡 ${explain}`;
   }
 
@@ -922,14 +926,29 @@ function updateTrust() {
 function saveMission4AndReturn() {
   const finalScore = ElabProgress.clampScore(vnTrust);
   ElabProgress.saveMission(4, 'clear', finalScore);
-  MissionUI.showClearAndReturn({
-    score: finalScore,
-    kicker: 'Championship Clear',
-    accent: '#f3c451',
-    label: '에너지 보존의 완성',
-    formula: 'Ek + Ep + Es + Q = E₀',
-    formulaSize: '1.5rem',
-    desc: '에너지는 형태만 바뀔 뿐, 절대 사라지지 않는다'
+  if (finalScore >= 1000 && window.ElabBadges) window.ElabBadges.unlockWithToast('full_trust');
+  MissionUI.askCoachQuestion({
+    speaker: '코치 확인 퀴즈',
+    question: '다이빙 선수가 10m 플랫폼에서 뛰어내려 수면 직전에 있어. 가장 큰 에너지 형태는?',
+    choices: [
+      { label: '운동에너지(Ek) — 플랫폼의 위치에너지가 거의 전부 전환됐다', correct: true,
+        feedback: '정확해. 수면 직전 h≈0이므로 Ep≈0. 대부분의 에너지가 Ek = ½mv²로 전환돼.' },
+      { label: '위치에너지(Ep) — 아직 높이가 있어서 Ep가 가장 크다', correct: false,
+        feedback: '수면 직전에는 높이가 거의 0이야. Ep = mgh에서 h≈0이면 Ep도 거의 0이 돼.' },
+      { label: '열에너지(Q) — 공기저항이 대부분의 에너지를 열로 바꿨다', correct: false,
+        feedback: '공기저항은 약간의 Q를 만들지만 대부분이 아니야. 주된 전환은 Ep → Ek야.' }
+    ],
+    continueLabel: '챔피언십 완료 →'
+  }).then(() => {
+    MissionUI.showClearAndReturn({
+      score: finalScore,
+      kicker: 'Championship Clear',
+      accent: '#f3c451',
+      label: '에너지 보존의 완성',
+      formula: 'Ek + Ep + Es + Q = E₀',
+      formulaSize: '1.5rem',
+      desc: '에너지는 형태만 바뀔 뿐, 절대 사라지지 않는다'
+    });
   });
 }
 

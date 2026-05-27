@@ -1520,10 +1520,25 @@ function createThreeRope() {
       const totalScore = Math.round(state.roundScores.reduce((s, r) => s + (r ? r.total : 0), 0));
       const missionScore = ElabProgress.clampScore(totalScore);
       ElabProgress.saveMission(3, 'clear', missionScore);
-      MissionUI.showClearAndReturn({
-        score: missionScore,
-        formula: 'Es = ½kx²',
-        desc: '탄성 위치에너지 - 늘어난 줄에 에너지가 저장된다'
+      if (missionScore >= 900 && window.ElabBadges) window.ElabBadges.unlockWithToast('precision');
+      MissionUI.askCoachQuestion({
+        speaker: '코치 확인 퀴즈',
+        question: '번지줄이 최대로 늘어난 순간, 점퍼 속도는 거의 0이야. 이 순간 에너지 상태는?',
+        choices: [
+          { label: 'Ep와 Ek 대부분이 탄성에너지(Es = ½kx²)로 전환된 상태', correct: true,
+            feedback: '맞아. 속도≈0이면 Ek≈0이고 높이도 낮아져 Ep도 줄었어. 그 에너지가 모두 줄의 탄성에너지로 저장된 거야.' },
+          { label: 'Ek가 최대이고 Es = 0인 상태', correct: false,
+            feedback: '줄이 최대로 늘어난 순간은 속도가 가장 느릴 때야. Ek가 아닌 Es가 최대야.' },
+          { label: '세 에너지 Ep, Ek, Es가 각각 균등하게 나뉜 상태', correct: false,
+            feedback: '에너지 배분은 물리 조건에 따라 달라. 이 순간은 Es가 압도적으로 크고 Ek는 거의 0이야.' }
+        ],
+        continueLabel: '미션 완료 →'
+      }).then(() => {
+        MissionUI.showClearAndReturn({
+          score: missionScore,
+          formula: 'Es = ½kx²',
+          desc: '탄성 위치에너지 - 늘어난 줄에 에너지가 저장된다'
+        });
       });
     });
 

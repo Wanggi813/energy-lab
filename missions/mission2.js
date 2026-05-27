@@ -878,9 +878,24 @@ const canvas = document.getElementById('gameCanvas');
         document.getElementById('btn-complete').addEventListener('click', () => {
             const missionScore = ElabProgress.clampScore(GAME.score);
             ElabProgress.saveMission(2, 'clear', missionScore);
-            MissionUI.showClearAndReturn({
-              score: missionScore,
-              formula: 'Q = F × d',
-              desc: '마찰 에너지 손실 - 마찰력이 클수록 열에너지 손실 증가'
+            if (missionScore >= 1000 && window.ElabBadges) window.ElabBadges.unlockWithToast('friction5');
+            MissionUI.askCoachQuestion({
+              speaker: '코치 확인 퀴즈',
+              question: '컬링 스톤이 결국 멈췄어. 처음 준 운동에너지는 어디로 갔을까?',
+              choices: [
+                { label: '마찰력이 한 일만큼 열에너지(Q)로 전환됐다 (Q = F × d)', correct: true,
+                  feedback: '정확해. 에너지는 절대 소멸하지 않아. 마찰력(F)이 이동 거리(d)만큼 일을 하며 열에너지로 전환된 거야.' },
+                { label: '스톤이 멈추면서 에너지가 완전히 소멸했다', correct: false,
+                  feedback: '에너지는 절대 소멸하지 않아. 열처럼 눈에 보이지 않는 형태로 전환될 뿐이야.' },
+                { label: '공기 중으로 흩어지며 위치에너지가 됐다', correct: false,
+                  feedback: '평평한 얼음 위라 위치에너지 변화는 없어. 마찰이 운동에너지를 열로 바꾼 거야.' }
+              ],
+              continueLabel: '미션 완료 →'
+            }).then(() => {
+              MissionUI.showClearAndReturn({
+                score: missionScore,
+                formula: 'Q = F × d',
+                desc: '마찰 에너지 손실 - 마찰력이 클수록 열에너지 손실 증가'
+              });
             });
         });

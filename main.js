@@ -291,6 +291,10 @@ const el = {
   notebookCards: document.getElementById('notebookCards'),
   openNotebook: document.getElementById('openNotebook'),
   closeNotebook: document.getElementById('closeNotebook'),
+  openBadges: document.getElementById('openBadges'),
+  closeBadge: document.getElementById('closeBadge'),
+  badgeModal: document.getElementById('badgeModal'),
+  badgeGrid: document.getElementById('badgeGrid'),
   rankModal: document.getElementById('rankModal'),
   rankName: document.getElementById('rankName'),
   rankList: document.getElementById('rankList'),
@@ -315,30 +319,32 @@ const STORY_LINES = {
   outside(cleared) {
     if (cleared.length === 0)
       return 'D-30일. 에너지 스포츠 챔피언십이 한 달 후야. 동계 훈련장에서 서윤이와 지훈이 먼저 만나보자.';
-    if (cleared.length < 2 || (!cleared.includes(1) || !cleared.includes(2)))
-      return '동계 훈련장 실험이 진행 중이야. 서윤이와 지훈이 에너지 전환을 열심히 배우고 있어.';
-    if (!cleared.includes(3))
-      return '동계 훈련 완료! 이제 번지점프 타워로 가서 민재를 훈련시켜야 해.';
-    if (!cleared.includes(4))
-      return '번지점프까지 완벽해. 선수 숙소에서 세 선수 종합 점검만 하면 준비 끝이야!';
-    return '모든 훈련 완료! 챔피언십 준비 완벽해. 랭킹 기록실에 최고 성과를 남겨봐.';
+    if (cleared.includes(1) && !cleared.includes(2))
+      return '서윤이가 Ek + Ep = 일정을 몸으로 익혔어. 이제 지훈이랑 컬링에서 그 에너지가 마찰로 어떻게 열로 손실되는지 확인해봐.';
+    if (cleared.includes(1) && cleared.includes(2) && !cleared.includes(3))
+      return '보존(M1)과 손실(M2)을 모두 봤지. 번지 타워에서 탄성에너지가 세 번째 변수로 합류해 — 같은 법칙, 다른 모습이야.';
+    if (cleared.includes(3) && !cleared.includes(4))
+      return '하프파이프의 Ek+Ep, 컬링의 Q, 번지의 Es. 이 셋이 사실 하나야: Ek + Ep + Es + Q = E₀. 챔피언십에서 직접 연결해봐.';
+    if (cleared.includes(4))
+      return '모든 훈련 완료! 챔피언십 준비 완벽해. 랭킹 기록실에 최고 성과를 남겨봐.';
+    return '동계 훈련장 실험이 진행 중이야. 서윤이와 지훈이 에너지 전환을 열심히 배우고 있어.';
   },
   winter(cleared) {
     if (!cleared.includes(1))
       return '서윤이가 하프파이프에서 기다리고 있어. 위치에너지가 운동에너지로 바뀌는 순간을 직접 체험해봐.';
     if (!cleared.includes(2))
-      return '하프파이프 실험 완료, 서윤이가 많이 성장했어! 이제 지훈이랑 컬링장에서 마찰 에너지 실험을 해보자.';
-    return '동계 훈련 끝! 서윤이와 지훈이가 에너지 전환 원리를 완벽히 익혔어. 챔피언십이 기대돼.';
+      return '하프파이프 완료! Ek + Ep가 보존되는 걸 느꼈지? 이번엔 컬링에서 마찰이 그 에너지를 어떻게 열(Q)로 바꾸는지 확인해봐.';
+    return '동계 훈련 끝! 에너지 보존(M1)과 마찰 손실(M2)을 모두 체험했어. 이제 탄성에너지가 기다리는 번지 타워로 가보자.';
   },
   bungee(cleared) {
     if (!cleared.includes(3))
-      return '민재가 번지점프 준비 중이야. 줄의 탄성계수를 잘 설계해서 Ep→Ek→Ee 전환을 안전하게 체험하게 해줘.';
-    return '완벽한 설계야! 민재가 탄성 에너지 전환을 몸소 익혔어. 이제 숙소에서 세 선수 종합 점검이 남았어.';
+      return '하프파이프와 컬링에서 에너지가 보존되고 손실되는 걸 봤지. 번지줄에서는 탄성에너지(Es = ½kx²)가 세 번째로 합류해 — 세 에너지가 동시에 움직여.';
+    return '완벽한 설계야! 민재가 탄성에너지 전환을 몸소 익혔어. 이제 숙소에서 세 에너지가 하나의 방정식으로 합쳐지는 것을 확인해봐.';
   },
   dorm(cleared) {
     if (!cleared.includes(4))
-      return '대회 당일이야. 하프파이프·컬링·번지에서 배운 에너지 법칙이 지금 다이빙·육상·장대높이뛰기 실전에서 통할지 확인해봐.';
-    return '완벽해! 세 선수 모두 훈련에서 배운 에너지 법칙을 실전에서 완벽하게 써냈어. 챔피언십 우승이야!';
+      return '하프파이프의 Ek+Ep, 컬링의 Q, 번지의 Es — 세 미션의 에너지가 사실 하나야: Ek + Ep + Es + Q = E₀. 챔피언십에서 직접 연결해봐.';
+    return '완벽해! 세 선수 모두 에너지 법칙을 실전에서 완벽하게 써냈어. 챔피언십 우승이야!';
   },
   ranking() {
     return '훈련 기록실이야. 지금까지의 성과를 저장하고 다른 코치들과 실력을 비교해봐.';
@@ -387,6 +393,37 @@ function closeNotebookModal() {
   el.notebookModal.classList.add('hidden');
   state.keys.clear();
   el.openNotebook.focus();
+}
+
+function openBadgeModal() {
+  state.keys.clear();
+  renderBadges();
+  el.badgeModal.classList.remove('hidden');
+  requestAnimationFrame(() => el.closeBadge.focus());
+}
+
+function closeBadgeModal() {
+  el.badgeModal.classList.add('hidden');
+  state.keys.clear();
+  el.openBadges.focus();
+}
+
+function renderBadges() {
+  if (!window.ElabBadges) return;
+  el.badgeGrid.innerHTML = window.ElabBadges.getAll().map(b => `
+    <div class="badge-item ${b.unlocked ? 'badge-unlocked' : 'badge-locked'}">
+      <div class="badge-icon">${b.icon}</div>
+      <div class="badge-name">${b.name}</div>
+      <div class="badge-desc">${b.desc}</div>
+    </div>
+  `).join('');
+}
+
+function checkBadgesOnLoad() {
+  if (!window.ElabBadges) return;
+  const allCleared = MISSIONS.every(m => getMissionRecord(m.id).status === 'clear');
+  if (allCleared) window.ElabBadges.unlockWithToast('all_clear');
+  if (getTotalScore() >= 3500) window.ElabBadges.unlockWithToast('champion');
 }
 
 function downloadCertificate() {
@@ -1236,6 +1273,7 @@ function isModalOpen(modal) {
 function getActiveModal() {
   if (isModalOpen(el.rankModal)) return el.rankModal;
   if (isModalOpen(el.notebookModal)) return el.notebookModal;
+  if (isModalOpen(el.badgeModal)) return el.badgeModal;
   return null;
 }
 
@@ -1283,6 +1321,7 @@ function bindInput() {
       if (event.code === 'Escape') {
         event.preventDefault();
         if (activeModal === el.rankModal) closeRankModal();
+        else if (activeModal === el.badgeModal) closeBadgeModal();
         else closeNotebookModal();
         return;
       }
@@ -1330,6 +1369,11 @@ function bindInput() {
 
   el.openNotebook.addEventListener('click', openNotebookModal);
   el.closeNotebook.addEventListener('click', closeNotebookModal);
+  el.openBadges.addEventListener('click', openBadgeModal);
+  el.closeBadge.addEventListener('click', closeBadgeModal);
+  el.badgeModal.addEventListener('click', event => {
+    if (event.target === el.badgeModal) closeBadgeModal();
+  });
   document.getElementById('downloadCert').addEventListener('click', downloadCertificate);
   el.notebookCards.addEventListener('click', e => {
     const card = e.target.closest('.nb-flip-card[data-mission]');
@@ -1352,6 +1396,7 @@ function bindInput() {
     localStorage.removeItem(SAVE_KEY);
     localStorage.removeItem(RANK_KEY);
     localStorage.removeItem(TUTORIAL_KEY);
+    if (window.ElabBadges) window.ElabBadges.reset();
     loadProgress();
     renderHotspots();
     renderProgress();
@@ -1362,6 +1407,7 @@ function bindInput() {
     loadProgress();
     renderHotspots();
     renderProgress();
+    checkBadgesOnLoad();
     const line = getStoryLine(state.zoneId);
     if (line) showStoryBubble(line);
   });

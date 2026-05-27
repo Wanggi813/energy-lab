@@ -72,74 +72,100 @@ html, body {
 
 #vnDialogue {
   position: absolute; bottom: 0; left: 0; right: 0;
-  height: 200px;
-  padding: 0 32px 20px;
-  display: flex; flex-direction: column; gap: 6px;
+  height: 232px;
+  padding: 0 36px 26px;
+  display: flex; flex-direction: column; gap: 4px;
   cursor: pointer;
-  background: rgba(4,10,20,.82);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(48,213,255,.18);
+  background: linear-gradient(180deg, rgba(3,8,18,.90) 0%, rgba(2,6,14,.97) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 2px solid var(--vn-char-color, rgba(48,213,255,.5));
+  transition: border-color .5s ease;
+}
+#vnDialogue::before {
+  content: '';
+  position: absolute; top: 2px; bottom: 0; left: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--vn-char-color, rgba(48,213,255,.7)), transparent 65%);
+  pointer-events: none;
 }
 #vnNameplate {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex; align-items: center; gap: 9px;
   align-self: flex-start;
-  padding: 5px 18px;
+  padding: 7px 22px;
   border-radius: 8px 8px 0 0;
-  font-size: 13px; font-weight: 700;
-  transition: background .35s, color .35s, border-color .35s;
+  font-size: 15px; font-weight: 900; letter-spacing: .05em;
+  transition: background .35s, color .35s, border-color .35s, box-shadow .35s;
   border: 1px solid var(--panel-line); border-bottom: none;
   background: var(--panel);
+  box-shadow: 0 -3px 18px rgba(0,0,0,.55);
+}
+#vnNameplate::before {
+  content: '';
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .9;
+  flex-shrink: 0;
 }
 #vnText {
-  font-size: 16px; line-height: 1.8; font-weight: 400;
-  color: var(--text); min-height: 56px; flex: 1;
+  font-size: 17px; line-height: 1.9; font-weight: 400;
+  color: var(--text); min-height: 60px; flex: 1;
+  padding-top: 4px;
+  text-shadow: 0 1px 10px rgba(0,0,0,.9);
+  letter-spacing: .015em;
 }
 #vnAdvanceBlink {
-  position: absolute; bottom: 20px; right: 32px;
-  font-size: 11px; color: var(--muted); font-weight: 500;
-  animation: blink .9s ease-in-out infinite;
+  position: absolute; bottom: 24px; right: 36px;
+  font-size: 18px; color: var(--vn-char-color, var(--accent));
+  filter: drop-shadow(0 0 8px var(--vn-char-color, var(--accent)));
+  animation: blink-adv 1.1s ease-in-out infinite;
 }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.1} }
+@keyframes blink-adv { 0%,100%{opacity:.9;transform:translateY(0)} 50%{opacity:.2;transform:translateY(5px)} }
 
 #vnChoiceOverlay {
   position: absolute; bottom: 0; left: 0; right: 0;
-  padding: 20px 32px 24px;
-  background: rgba(4,10,20,.88);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(48,213,255,.18);
-  display: flex; flex-direction: column; gap: 8px;
+  padding: 22px 36px 28px;
+  background: linear-gradient(180deg, rgba(3,8,18,.90) 0%, rgba(2,6,14,.97) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 2px solid var(--vn-char-color, rgba(48,213,255,.4));
+  display: flex; flex-direction: column; gap: 9px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.35s ease;
+  transition: opacity 0.35s ease, border-color .5s ease;
 }
 #vnChoiceOverlay.active {
   opacity: 1;
   pointer-events: auto;
 }
 #vnChoicePrompt {
-  font-size: 11px; font-weight: 700; color: var(--amber);
-  letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2px;
+  font-size: 13px; font-weight: 800; color: var(--amber);
+  letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px;
 }
 .vn-choice {
   background: var(--panel);
   border: 1px solid var(--panel-line);
+  border-left: 3px solid transparent;
   border-radius: 10px; padding: 11px 18px;
   font: inherit; font-size: 14px; font-weight: 500; color: var(--text);
   cursor: pointer; text-align: left;
-  transition: all .15s; display: flex; gap: 12px; align-items: center;
+  transition: all .18s; display: flex; gap: 12px; align-items: center;
 }
 .vn-choice:hover:not(:disabled) {
-  background: rgba(48,213,255,.1);
-  border-color: rgba(48,213,255,.45);
+  background: rgba(48,213,255,.08);
+  border-color: rgba(48,213,255,.4);
+  border-left-color: var(--vn-char-color, var(--accent));
   color: #fff; transform: translateX(4px);
+  box-shadow: 0 4px 18px rgba(0,0,0,.45);
 }
 .vn-choice .key {
-  width: 22px; height: 22px; flex-shrink: 0;
-  background: rgba(48,213,255,.12); border: 1px solid rgba(48,213,255,.3);
-  border-radius: 5px; display: grid; place-items: center;
-  font-size: 11px; font-weight: 700; color: var(--accent);
+  width: 24px; height: 24px; flex-shrink: 0;
+  background: rgba(48,213,255,.08); border: 1px solid rgba(48,213,255,.25);
+  border-radius: 6px; display: grid; place-items: center;
+  font-size: 11px; font-weight: 800; color: var(--accent);
+  letter-spacing: .02em;
   transition: all .2s;
 }
 .vn-choice.result-correct {

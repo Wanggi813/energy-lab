@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>선수 성장 연구소</title>
+  <title>Energy Lab — 선수 성장 연구소</title>
   <link rel="stylesheet" href="style.css?v=5">
   <script>if(new URLSearchParams(location.search).get('back')==='1')document.documentElement.classList.add('is-returning');</script>
 </head>
@@ -47,6 +47,7 @@
 
       <div class="hud-right">
         <button id="openNotebook" class="hud-notebook-btn" type="button">📓 노트</button>
+        <button id="openBadges" class="hud-notebook-btn" type="button">🏅 배지</button>
         <div class="score-pill">
           <span>총점</span>
           <strong id="totalScore">0 pt</strong>
@@ -131,6 +132,16 @@
     </div>
   </section>
 
+  <section id="badgeModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="badgeTitle">
+    <div class="modal-panel badge-panel">
+      <button id="closeBadge" class="modal-close" type="button" aria-label="배지 닫기">×</button>
+      <span class="panel-kicker">ACHIEVEMENTS</span>
+      <h2 id="badgeTitle">성취 배지</h2>
+      <p>미션에서 특별 조건을 달성하면 배지가 해금됩니다.</p>
+      <div id="badgeGrid" class="badge-grid"></div>
+    </div>
+  </section>
+
   <section id="notebookModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="notebookTitle">
     <div class="modal-panel notebook-panel">
       <button id="closeNotebook" class="modal-close" type="button" aria-label="노트 닫기">×</button>
@@ -145,6 +156,7 @@
   </section>
 
   <script src="progress.js"></script>
+  <script src="badges.js"></script>
   <script src="main.js?v=8"></script>
   <script>
     (function () {
