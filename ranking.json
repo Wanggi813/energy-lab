@@ -1,5 +1,16 @@
 [
   {
+    "name": "Champion",
+    "score": 3913,
+    "missions": [
+      1000,
+      1000,
+      913,
+      1000
+    ],
+    "savedAt": "2026-05-27T11:06:45.867Z"
+  },
+  {
     "name": "기러기",
     "score": 3686,
     "missions": [
