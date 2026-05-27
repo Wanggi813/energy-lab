@@ -1132,14 +1132,19 @@ function renderRanks() {
   }
 
   const medals = ['🥇', '🥈', '🥉'];
+  const placeLabels = ['Champion', 'Runner-up', 'Third place'];
   el.rankList.innerHTML = ranks.map((rank, index) => {
     const s = Number(rank.score || 0);
     const g = getGrade(s);
     const indexLabel = medals[index] || `${index + 1}`;
     const date = rank.savedAt ? new Date(rank.savedAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }) : '';
     return `
-    <div class="rank-row rank-row-v2" style="border-color:${g.color}33;animation:rankSlideIn .35s ${index * 0.06}s ease both">
+    <div class="rank-row rank-row-v2 rank-place-${index + 1}" data-rank="${index + 1}" style="border-color:${g.color}33;animation:rankSlideIn .35s ${index * 0.06}s ease both">
       <span class="rank-index-v2">${indexLabel}</span>
+      <div class="rank-trophy-wrap" aria-hidden="true">
+        <span class="rank-trophy">🏆</span>
+        <span class="rank-place-label">${placeLabels[index] || `${index + 1} place`}</span>
+      </div>
       <div class="rank-info">
         <strong class="rank-name">${escapeHtml(rank.name || '코치')}</strong>
         <div class="rank-mission-bars">${missionBarsHTML(rank.missions)}</div>
