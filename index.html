@@ -133,12 +133,26 @@
   </section>
 
   <section id="badgeModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="badgeTitle">
-    <div class="modal-panel badge-panel">
-      <button id="closeBadge" class="modal-close" type="button" aria-label="배지 닫기">×</button>
-      <span class="panel-kicker">ACHIEVEMENTS</span>
-      <h2 id="badgeTitle">성취 배지</h2>
-      <p>미션에서 특별 조건을 달성하면 배지가 해금됩니다.</p>
-      <div id="badgeGrid" class="badge-grid"></div>
+    <div class="badge-notebook">
+      <div class="bn-spine">
+        <div class="bn-spine-hole"></div>
+        <div class="bn-spine-hole"></div>
+        <div class="bn-spine-hole"></div>
+        <div class="bn-spine-hole"></div>
+        <div class="bn-spine-hole"></div>
+        <span class="bn-spine-label">ENERGY LAB</span>
+      </div>
+      <div class="bn-page">
+        <div class="bn-tape">🏅 STAMP COLLECTION</div>
+        <button id="closeBadge" class="bn-close" type="button" aria-label="배지 닫기">✕</button>
+        <h2 id="badgeTitle" class="bn-title">에너지 실험 도장판</h2>
+        <p class="bn-desc">미션에서 특별 조건을 달성하면 도장을 받습니다.</p>
+        <hr class="bn-rule">
+        <div id="badgeGrid" class="badge-grid"></div>
+        <div class="bn-footer">
+          <span class="bn-count" id="bn-count">0 / 7 수집</span>
+        </div>
+      </div>
     </div>
   </section>
 

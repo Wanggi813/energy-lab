@@ -410,13 +410,29 @@ function closeBadgeModal() {
 
 function renderBadges() {
   if (!window.ElabBadges) return;
-  el.badgeGrid.innerHTML = window.ElabBadges.getAll().map(b => `
-    <div class="badge-item ${b.unlocked ? 'badge-unlocked' : 'badge-locked'}">
-      <div class="badge-icon">${b.icon}</div>
-      <div class="badge-name">${b.name}</div>
-      <div class="badge-desc">${b.desc}</div>
-    </div>
-  `).join('');
+  const STAMP_COLORS = {
+    conserve:   '#d48c18',
+    spin720:    '#8844cc',
+    friction5:  '#cc3e20',
+    precision:  '#148898',
+    full_trust: '#b87010',
+    all_clear:  '#3448c8',
+    champion:   '#a06808'
+  };
+  const badges = window.ElabBadges.getAll();
+  const unlockedCount = badges.filter(b => b.unlocked).length;
+  el.badgeGrid.innerHTML = badges.map(b => {
+    const col = STAMP_COLORS[b.id] || '#888';
+    const cls = b.unlocked ? 'badge-stamp--on' : 'badge-stamp--off';
+    const styleAttr = b.unlocked ? ` style="--sc:${col}"` : '';
+    return `<div class="badge-stamp ${cls}"${styleAttr}>
+  <div class="bs-circle"><div class="bs-icon">${b.icon}</div></div>
+  <div class="bs-name">${b.name}</div>
+  <div class="bs-cond">${b.desc}</div>
+</div>`;
+  }).join('');
+  const countEl = document.getElementById('bn-count');
+  if (countEl) countEl.textContent = `${unlockedCount} / 7 도장 수집`;
 }
 
 function checkBadgesOnLoad() {

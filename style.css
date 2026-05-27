@@ -1891,45 +1891,182 @@ kbd {
   .notebook-cards { grid-template-columns: 1fr; }
 }
 
-/* ── 배지 패널 ── */
-.badge-panel {
-  width: min(640px, calc(100vw - 32px));
-  max-height: 90vh;
-  overflow-y: auto;
+/* ── 배지 노트북 ── */
+.badge-notebook {
+  position: relative;
+  display: flex;
+  width: min(740px, calc(100vw - 24px));
+  max-height: 92vh;
+  border-radius: 4px 12px 12px 4px;
+  overflow: hidden;
+  box-shadow: 0 16px 60px rgba(0,0,0,.65), 0 4px 0 rgba(0,0,0,.35);
 }
 
-.badge-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 14px;
-  margin-top: 16px;
-}
-
-.badge-item {
+.bn-spine {
+  width: 44px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #1b3a2e 0%, #12281e 50%, #1b3a2e 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 18px 12px;
-  border-radius: 14px;
-  text-align: center;
-  transition: transform 0.18s, box-shadow 0.18s;
+  padding: 20px 0 18px;
+  position: relative;
+}
+.bn-spine::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0; width: 4px;
+  background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(0,0,0,.28), rgba(255,255,255,.05));
+}
+.bn-spine-hole {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #0b1e16;
+  border: 2px solid rgba(255,255,255,.07);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.9), 0 1px 0 rgba(255,255,255,.05);
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+.bn-spine-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 8px; font-weight: 900;
+  letter-spacing: .22em; color: rgba(255,255,255,.26);
+  text-transform: uppercase;
+  margin-top: auto;
 }
 
-.badge-unlocked {
-  background: linear-gradient(145deg, rgba(62,230,143,0.12), rgba(48,213,255,0.08));
-  border: 1.5px solid rgba(62,230,143,0.45);
-  box-shadow: 0 2px 16px rgba(62,230,143,0.12);
+.bn-page {
+  flex: 1;
+  background: #f8f3e8;
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0px, transparent 27px,
+    rgba(175,148,95,.18) 27px, rgba(175,148,95,.18) 28px
+  );
+  padding: 44px 32px 22px 26px;
+  display: flex;
+  flex-direction: column;
+  color: #1a1008;
+  overflow-y: auto;
+  max-height: 92vh;
+  border-left: 3px solid rgba(210,65,65,.28);
+  position: relative;
 }
-.badge-unlocked:hover { transform: translateY(-3px); box-shadow: 0 6px 24px rgba(62,230,143,0.2); }
 
-.badge-locked {
-  background: rgba(255,255,255,0.03);
-  border: 1.5px solid rgba(255,255,255,0.08);
-  filter: grayscale(1);
-  opacity: 0.45;
+.bn-tape {
+  position: absolute;
+  top: 12px; left: 50%;
+  transform: translateX(-50%) rotate(-1.3deg);
+  background: rgba(255,214,70,.78);
+  color: #3a2000;
+  font-size: 10px; font-weight: 900;
+  letter-spacing: .18em; text-transform: uppercase;
+  padding: 5px 22px;
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.18);
+  z-index: 2; white-space: nowrap;
 }
 
-.badge-icon { font-size: 2.4rem; line-height: 1; }
-.badge-name { font-size: 0.88rem; font-weight: 700; color: #e8f4ff; }
-.badge-desc { font-size: 0.75rem; color: #7aa8c8; line-height: 1.4; }
+.bn-close {
+  position: absolute; top: 14px; right: 14px;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 1.5px solid rgba(80,50,20,.25);
+  background: rgba(80,50,20,.07);
+  color: #5a3a18; font-size: 14px; font-weight: 700;
+  cursor: pointer; display: grid; place-items: center;
+  transition: background .15s, color .15s; font-family: inherit;
+}
+.bn-close:hover { background: rgba(190,55,25,.12); border-color: rgba(190,55,25,.45); color: #a81808; }
+
+.bn-title {
+  font-size: 1.3rem; font-weight: 900; color: #1a0e04;
+  letter-spacing: .03em;
+  margin-top: 8px; margin-bottom: 3px; line-height: 1.2;
+}
+.bn-desc {
+  font-size: .8rem; color: #8a6030; margin-bottom: 8px; line-height: 1.5;
+}
+.bn-rule {
+  border: none;
+  border-top: 2px solid rgba(160,118,55,.28);
+  margin: 4px 0 18px;
+}
+
+/* Stamp grid */
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px 10px;
+  margin-bottom: 10px;
+}
+
+.badge-stamp {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 7px;
+}
+
+.bs-circle {
+  width: 84px; height: 84px; border-radius: 50%;
+  display: grid; place-items: center;
+  position: relative; transition: transform .22s;
+}
+.badge-stamp--on .bs-circle {
+  background: var(--sc, #888);
+  border: 3px solid var(--sc, #888);
+  box-shadow:
+    inset 0 8px 0 rgba(255,255,255,.25),
+    inset 0 -14px 0 rgba(0,0,0,.18),
+    0 0 0 2px #f8f3e8,
+    0 0 0 5px var(--sc, #888),
+    0 5px 18px rgba(0,0,0,.24);
+}
+.badge-stamp--off .bs-circle {
+  border: 2.5px dashed rgba(140,108,55,.28);
+  background: rgba(140,108,55,.04);
+}
+.badge-stamp--on:hover .bs-circle { transform: scale(1.09) rotate(-3deg); }
+.badge-stamp--on .bs-circle::after {
+  content: '';
+  position: absolute; inset: 6px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,.32);
+  pointer-events: none;
+}
+
+.bs-icon {
+  font-size: 2.3rem; line-height: 1;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,.3));
+}
+.badge-stamp--off .bs-icon { filter: grayscale(1); opacity: .28; }
+
+.bs-name {
+  font-size: .74rem; font-weight: 900; color: #1a0e04;
+  text-align: center; letter-spacing: .02em; line-height: 1.3;
+}
+.badge-stamp--off .bs-name { color: rgba(80,58,30,.32); }
+
+.bs-cond {
+  font-size: .65rem; color: #7a5428;
+  text-align: center; line-height: 1.35;
+}
+.badge-stamp--off .bs-cond { color: rgba(80,58,30,.2); }
+
+/* Personality tilt for each stamp */
+.badge-stamp:nth-child(1) { transform: rotate(-1.4deg); }
+.badge-stamp:nth-child(2) { transform: rotate(.8deg); }
+.badge-stamp:nth-child(3) { transform: rotate(-0.4deg); }
+.badge-stamp:nth-child(4) { transform: rotate(1.7deg); }
+.badge-stamp:nth-child(5) { transform: rotate(-1.8deg); }
+.badge-stamp:nth-child(6) { transform: rotate(.6deg); }
+.badge-stamp:nth-child(7) { transform: rotate(-1.1deg); }
+
+.bn-footer {
+  display: flex; justify-content: flex-end; align-items: center;
+  margin-top: auto; padding-top: 10px;
+  border-top: 1px solid rgba(160,118,55,.2);
+}
+.bn-count {
+  font-size: .82rem; font-weight: 900;
+  color: #6a4618; letter-spacing: .08em;
+}
