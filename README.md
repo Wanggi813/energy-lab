@@ -39,6 +39,7 @@ Vercel 배포 시 랭킹 API를 쓰려면 환경 변수가 필요하다.
 muligo2/
 ├─ index.html                  # 로비, 로딩/인트로, 모달 진입점
 ├─ style.css                   # 로비 공통 스타일
+├─ ranking-podium.css          # 랭킹 기록실 전용 가로형 리더보드 스타일
 ├─ main.js                     # 로비 상태, 구역 이동, 모달, 랭킹, 노트, 배지
 ├─ progress.js                 # 미션 진행도 저장/점수 보정 API
 ├─ badges.js                   # 배지 정의/해금/토스트 API
@@ -97,6 +98,11 @@ muligo2/
 - POST: `{ name, score, missions, savedAt }` 저장 후 점수순 정렬, 최대 200개 유지
 - 서버 실패 시 `athlete-lab-ranking-v1` 로컬 캐시를 사용한다.
 - 화면에는 상위 3개 기록만 표시한다.
+- 랭킹 모달의 전용 스타일은 `ranking-podium.css`가 담당한다. 이 파일은 `style.css` 뒤에 로드되어 기존 랭킹/모달 스타일을 덮어쓴다.
+- 현재 랭킹 UI는 단상형이 아니라 가로형 아케이드 리더보드다. 1등, 2등, 3등은 한 줄씩 위에서 아래로 표시한다.
+- `main.js`의 `renderRanks()`는 각 행에 `rank-place-1`, `rank-place-2`, `rank-place-3` 클래스와 `data-rank`를 붙인다. 스타일 조정은 이 클래스를 기준으로 한다.
+- 1등은 이름 옆에 왕관(`👑`)을 CSS `::after`로 표시한다. 트로피는 `main.js`의 `.rank-trophy` 이모지(`🏆`)를 사용하며, CSS 도형 트로피를 다시 만들지 않는다.
+- 점수 영역은 박스형 테두리 없이 숫자만 강조한다. `style.css` 하단의 예전 `#rankModal .rank-row-v2:nth-child(...) .rank-score` 규칙과 충돌할 수 있으므로 `ranking-podium.css` 마지막의 score reset 규칙을 유지한다.
 - 등급 기준:
   - S: 3,500점 이상
   - A: 2,500점 이상
@@ -221,5 +227,7 @@ muligo2/
 - 점수 저장은 반드시 `ElabProgress.clampScore()` 또는 `saveMission()` 경로를 사용한다.
 - 미션 완료 후 로비 복귀는 `MissionUI.showClearAndReturn()`을 우선 사용한다.
 - 랭킹 서버가 실패해도 로컬 캐시로 동작해야 한다.
+- 랭킹 기록실 UI를 수정할 때는 `ranking-podium.css`를 우선 수정한다. `style.css`에는 과거 랭킹 실험 스타일이 남아 있으므로 새 랭킹 스타일은 `style.css` 뒤에 로드되는 전용 파일에서 강하게 덮어써야 한다.
+- `ranking-podium.css` 버전을 바꾸면 `index.html`의 `ranking-podium.css?v=N` 캐시 버전도 올린다.
 - `main.js`의 로비 구역 해금 조건과 각 미션의 저장 id가 어긋나면 진행이 막힌다.
 - 공통 UI를 수정할 때는 4개 미션의 인트로, 복귀 버튼, 완료 오버레이를 함께 확인한다.
