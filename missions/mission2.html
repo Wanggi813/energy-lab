@@ -3,9 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Energy Lab — 일과 에너지</title>
     <meta name="description" content="힘과 변위가 만드는 일, 위치에너지와 운동에너지의 변화를 함께 확인하는 역학 시뮬레이션입니다.">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <link rel="stylesheet" href="./mission2.css">
     <link rel="stylesheet" href="./mission-ui.css?v=4">
 </head>
@@ -66,11 +67,11 @@
     <div id="controls-panel" class="panel">
         <h2>🥌 투구 컨트롤 (F·Δt)</h2>
         <div class="control-group">
-            <label for="f-slider">미는 힘 (F): <span id="f-display">60</span> N</label>
+            <label for="f-slider">미는 힘 (F): <span id="f-display">40</span> N</label>
             <input type="range" id="f-slider" min="10" max="80" step="5" value="40">
         </div>
-        <p style="font-size:0.95rem; color:#e32636; font-weight:bold; margin-bottom:8px; text-align:center;">
-            👇 화면을 꾹 누르고 있으면 출발합니다!
+        <p class="control-help">
+            👇 화면을 꾹 누르고 있으면 출발합니다! 키보드는 <kbd>SPACE</kbd>를 누르고 있다가 떼고, 이동 중 <kbd>←</kbd><kbd>→</kbd> 또는 <kbd>A</kbd><kbd>D</kbd>로 스위핑합니다.
         </p>
 
         <details id="hint-box" style="margin-bottom:12px;background:rgba(255,211,0,0.07);border:1px solid rgba(255,211,0,0.3);border-radius:8px;padding:0;">
@@ -79,7 +80,7 @@
             </summary>
             <div style="padding:8px 12px 10px;border-top:1px solid rgba(255,211,0,0.2);">
                 <div style="font-size:0.78rem;color:#666;margin-bottom:6px;">타겟까지 거리 <b>30 m</b> 기준</div>
-                <div style="background:rgba(0,0,0,0.04);border-radius:6px;padding:7px 10px;font-size:0.8rem;font-family:monospace;margin-bottom:7px;">
+                <div style="background:rgba(0,0,0,0.04);border-radius:6px;padding:7px 10px;font-size:0.8rem;font-family:'Courier New',monospace;margin-bottom:7px;">
                     K₀ ≥ Q = μ·m·g·d<br>
                     K₀ ≥ <span id="hint-mu-val" style="color:#005eb8;font-weight:800;">0.008</span> × 20 × 9.81 × 30
                 </div>
@@ -169,12 +170,13 @@
     </div>
 
     <div id="sweep-hint"></div>
+    <div id="keyboard-status" class="sr-status" aria-live="polite"></div>
     <div id="flash-overlay"></div>
     <div id="result-message">NICE SHOT!</div>
     <div class="mission-back-slot">
         <button class="mission-back-btn" type="button" data-mission-back aria-label="로비로 돌아가기">로비</button>
     </div>
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="gameCanvas" role="img" aria-label="컬링 스톤의 이동과 에너지 변화를 보여주는 시뮬레이션 화면"></canvas>
     <script src="../progress.js"></script>
     <script src="../badges.js"></script>
     <script src="./mission-ui.js?v=5"></script>
@@ -182,6 +184,7 @@
     <script>
         document.getElementById('mi-start').addEventListener('click', () => {
             document.getElementById('mission-intro').classList.add('hidden');
+            window.startMission2Tutorial?.();
         });
     </script>
 
@@ -192,13 +195,13 @@
     </div>
     <div id="m2-hint-overlay" style="display:none;position:fixed;top:40px;right:8px;z-index:9998;width:290px;background:rgba(6,10,24,.97);border:1px solid rgba(255,180,0,.4);border-radius:10px;padding:16px;font-size:13px;color:#f0f4ff;line-height:1.7;">
         <div style="font-weight:900;color:#ffb347;margin-bottom:10px;font-size:14px;">💡 마찰 에너지 힌트</div>
-        <div style="background:rgba(255,180,0,.08);border-radius:6px;padding:8px 10px;font-family:monospace;margin-bottom:10px;">
+        <div style="background:rgba(255,180,0,.08);border-radius:6px;padding:8px 10px;font-family:'Courier New',monospace;margin-bottom:10px;">
             Q = F × d = μmg × d<br>
             K₀ = ½mv²  →  K₀ ≥ Q 필요
         </div>
-        <div style="margin-bottom:6px;">🎯 화면을 <b>꾹 누를수록</b> 스톤 속도가 빨라져요.</div>
+        <div style="margin-bottom:6px;">🎯 화면을 <b>꾹 누를수록</b> 스톤 속도가 빨라져요. 키보드는 <b>SPACE</b>를 누르고 있다가 떼면 됩니다.</div>
         <div style="margin-bottom:6px;">🎯 <b>F 슬라이더</b>를 높이면 같은 시간에 더 강하게 가속</div>
-        <div style="margin-bottom:6px;">🧊 <b>스위핑</b>으로 빙판 마찰을 줄여 더 멀리 보낼 수 있어요.</div>
+        <div style="margin-bottom:6px;">🧊 <b>스위핑</b>으로 빙판 마찰을 줄여 더 멀리 보낼 수 있어요. 이동 중에는 <b>←/→</b> 또는 <b>A/D</b>를 누르세요.</div>
         <div style="margin-bottom:6px;">📐 빙질이 나쁠수록(μ 큼) Q가 커져 스톤이 일찍 멈춰요.</div>
         <div style="font-size:11px;color:#aaa;margin-top:8px;">다시 클릭하면 닫힙니다.</div>
     </div>

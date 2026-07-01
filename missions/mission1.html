@@ -2,9 +2,10 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Energy Lab — 하프파이프</title>
   <meta name="description" content="스노보드 하프파이프에서 위치에너지와 운동에너지의 전환을 조작하며 안정적인 착지를 완성하는 역학 시뮬레이션입니다.">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="./mission1.css?v=3">
   <link rel="stylesheet" href="./mission-intro.css">
   <link rel="stylesheet" href="./mission-ui.css?v=4">
@@ -267,7 +268,7 @@
 
     document.getElementById('mi-start').addEventListener('click', () => {
       document.getElementById('mission-intro').classList.add('hidden');
-      document.getElementById('game-tutorial').classList.remove('hidden');
+      window.startMission1Tutorial?.();
     });
     document.getElementById('gt-start').addEventListener('click', () => {
       document.getElementById('game-tutorial').classList.add('hidden');

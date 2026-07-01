@@ -24,7 +24,7 @@
       overflow: hidden;
       background: #7ec8e3;
       color: var(--ink);
-      font-family: Pretendard, "Segoe UI", Arial, sans-serif;
+      font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
       letter-spacing: 0;
     }
 
@@ -147,6 +147,215 @@
       line-height: 1.42;
       pointer-events: none;
       z-index: 2;
+    }
+
+    .tutorial-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      background:
+        radial-gradient(circle at var(--tutorial-x, 76%) var(--tutorial-y, 35%), transparent 0 150px, rgba(3, 8, 16, 0.18) 220px, rgba(3, 8, 16, 0.54) 100%);
+      pointer-events: none;
+    }
+
+    .tutorial-overlay.hidden {
+      display: none;
+    }
+
+    .tutorial-overlay.is-review {
+      background: transparent;
+    }
+
+    .tutorial-panel {
+      position: fixed;
+      right: 324px;
+      bottom: 22px;
+      z-index: 32;
+      width: min(390px, calc(100vw - 32px));
+      padding: 18px;
+      border: 1px solid rgba(48, 213, 255, 0.42);
+      border-radius: 8px;
+      background: linear-gradient(180deg, rgba(8, 17, 30, 0.98), rgba(5, 14, 26, 0.98));
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
+      pointer-events: auto;
+    }
+
+    .tutorial-coach {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .tutorial-avatar {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid rgba(48, 213, 255, 0.45);
+      background: rgba(48, 213, 255, 0.12);
+      color: var(--blue);
+      font-size: 0.72rem;
+      font-weight: 900;
+    }
+
+    .tutorial-kicker {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--blue);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    .tutorial-panel h2 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .tutorial-progress {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+      margin-bottom: 12px;
+    }
+
+    .tutorial-progress span {
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .tutorial-progress span.is-active,
+    .tutorial-progress span.is-done {
+      background: var(--blue);
+    }
+
+    .tutorial-panel p {
+      margin: 0;
+      color: #dff5ff;
+      font-size: 0.88rem;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .tutorial-objectives {
+      display: grid;
+      gap: 6px;
+      margin: 14px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .tutorial-objectives li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 28px;
+      padding: 6px 9px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.045);
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 900;
+    }
+
+    .tutorial-objectives li::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.22);
+      flex-shrink: 0;
+    }
+
+    .tutorial-objectives li.is-done {
+      border-color: rgba(62, 230, 143, 0.30);
+      background: rgba(62, 230, 143, 0.08);
+      color: #dfffea;
+    }
+
+    .tutorial-objectives li.is-done::before {
+      background: var(--green);
+      box-shadow: 0 0 10px rgba(62, 230, 143, 0.35);
+    }
+
+    .tutorial-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .tutorial-actions button {
+      min-height: 34px;
+      padding: 0 14px;
+      border-radius: 7px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--ink);
+      font-family: inherit;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .tutorial-actions .primary {
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--blue), #70f0c7);
+      color: #021018;
+    }
+
+    .tutorial-target {
+      position: relative;
+      z-index: 31;
+      outline: 3px solid rgba(255, 207, 91, 0.95);
+      outline-offset: 5px;
+      box-shadow: 0 0 0 9999px rgba(3, 8, 16, 0.48), 0 0 24px rgba(255, 207, 91, 0.42);
+    }
+
+    .guide-btn {
+      flex-shrink: 0;
+      min-height: 0;
+      padding: 6px 14px;
+      border: 1px solid rgba(255, 207, 91, 0.7);
+      border-radius: 20px;
+      background: rgba(255, 207, 91, 0.22);
+      color: var(--yellow);
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px rgba(255, 207, 91, 0.18), 0 2px 10px rgba(255, 207, 91, 0.22);
+    }
+
+    .guide-btn:hover,
+    .guide-btn:focus-visible {
+      background: rgba(255, 207, 91, 0.32);
+      border-color: rgba(255, 207, 91, 0.9);
+    }
+
+    .guide-btn::before {
+      content: "❓ ";
+    }
+
+    .control-tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 18px;
+      margin-right: 7px;
+      padding: 0 6px;
+      border-radius: 5px;
+      background: rgba(255, 207, 91, 0.14);
+      color: var(--yellow);
+      font-size: 0.68rem;
+      font-weight: 900;
+      vertical-align: 1px;
+    }
+
+    .range-row.tutorial-pulse input[type="range"] {
+      accent-color: var(--yellow);
     }
 
     .panel {
@@ -322,6 +531,10 @@
       font-weight: 800;
     }
 
+    .status[hidden] {
+      display: none;
+    }
+
     .status strong {
       color: var(--ink);
       text-align: right;
@@ -495,6 +708,11 @@
       .panel {
         border-left: 0;
         border-top: 1px solid var(--line);
+      }
+
+      .tutorial-panel {
+        right: 16px;
+        bottom: 16px;
       }
 
       .top-hud {

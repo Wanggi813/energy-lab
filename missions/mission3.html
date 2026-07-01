@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Energy Lab — 번지점프</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="./mission3.css">
   <link rel="stylesheet" href="./mission-intro.css">
   <link rel="stylesheet" href="./mission-ui.css?v=4">
@@ -131,6 +132,7 @@
       <header>
         <h1>번지점프 설계사</h1>
         <div class="panel-top">
+          <button id="tutorial-replay" type="button" class="guide-btn">훈련 안내</button>
           <button id="practice-btn" style="flex-shrink:0;padding:4px 10px;font-size:0.75rem;min-height:0;border-radius:20px;border:1px solid rgba(48,213,255,0.28)">🎯 연습 모드</button>
         </div>
         <p class="subtitle">줄의 탄성과 길이를 설정하고 낙하를 시작하세요.</p>
@@ -139,12 +141,12 @@
       <section class="card">
         <div class="card-title">설계 조건 <span id="design-badge">대기 중</span></div>
         <div class="range-row">
-          <label for="k-input">줄의 탄성 계수 k</label>
+          <label for="k-input"><span class="control-tag">수정값 1</span>줄의 탄성 계수 k</label>
           <strong><span id="k-value">0</span> N/m</strong>
           <input id="k-input" type="range" min="0" max="800" value="0" step="5">
         </div>
         <div class="range-row">
-          <label for="l-input">줄의 원래 길이 L</label>
+          <label for="l-input"><span class="control-tag">수정값 2</span>줄의 원래 길이 L</label>
           <strong><span id="l-value">0</span> m</strong>
           <input id="l-input" type="range" min="0" max="38" value="0" step="1">
         </div>
@@ -184,10 +186,35 @@
       <div class="buttons">
         <button id="start-btn" class="primary">낙하 시작</button>
         <button id="reset-btn">초기화</button>
-        <button id="complete-btn" class="locked" style="grid-column:1/-1">미션 완료 (3라운드 후 해금)</button>
       </div>
     </aside>
   </main>
+
+  <div id="tutorial-overlay" class="tutorial-overlay hidden" aria-hidden="true">
+    <div class="tutorial-panel" role="dialog" aria-modal="false" aria-labelledby="tutorial-title">
+      <div class="tutorial-coach">
+        <div class="tutorial-avatar" aria-hidden="true">코치</div>
+        <div>
+          <span class="tutorial-kicker" id="tutorial-step">훈련 1 / 4</span>
+          <h2 id="tutorial-title">손님 요구사항 확인</h2>
+        </div>
+      </div>
+      <div class="tutorial-progress" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <p id="tutorial-copy">왼쪽 패널에서 안전 여유와 최대 G 조건을 먼저 확인하세요.</p>
+      <ol class="tutorial-objectives" aria-label="훈련 목표">
+        <li id="tutorial-obj-conditions">요구사항 확인</li>
+        <li id="tutorial-obj-k">k 슬라이더 조절</li>
+        <li id="tutorial-obj-l">L 슬라이더 조절</li>
+        <li id="tutorial-obj-start">낙하 테스트</li>
+      </ol>
+      <div class="tutorial-actions">
+        <button id="tutorial-skip" type="button">건너뛰기</button>
+        <button id="tutorial-next" class="primary" type="button">다음</button>
+      </div>
+    </div>
+  </div>
 
   <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
   <script src="../progress.js"></script>
@@ -198,6 +225,7 @@
   <script>
     document.getElementById('mi-start').addEventListener('click', () => {
       document.getElementById('mission-intro').classList.add('hidden');
+      window.startBungeeTutorial?.();
     });
   </script>
 </body>

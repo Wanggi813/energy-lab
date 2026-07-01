@@ -15,7 +15,7 @@
       { name:'박민준', age:22, mass:75, avatar:'🤸',
         desc:'"엄청 짜릿하게 해주세요! G가 낮으면 실망해요."',
         tag:'스릴 필수', tagColor:'var(--yellow)',
-        minClearance:4.0, maxG:5.5, minG:4.0, idealG:4.75 },
+        minClearance:4.0, maxG:4.2, minG:3.4, idealG:4.0 },
       { name:'이순자', age:68, mass:90, avatar:'👴',
         desc:'"무릎이 안 좋아요. 아주 부드럽고 안전하게요."',
         tag:'초안전', tagColor:'var(--blue)',
@@ -57,7 +57,6 @@
       safeG: document.getElementById('safe-g'),
       start: document.getElementById('start-btn'),
       reset: document.getElementById('reset-btn'),
-      complete: document.getElementById('complete-btn'),
       modal: document.getElementById('result-modal'),
       resultTitle: document.getElementById('result-title'),
       resultCopy: document.getElementById('result-copy'),
@@ -88,6 +87,19 @@
       safeMinG: document.getElementById('safe-min-g'),
       minGRow: document.getElementById('min-g-row'),
       attemptCount: document.getElementById('attempt-count'),
+      tutorialOverlay: document.getElementById('tutorial-overlay'),
+      tutorialStep: document.getElementById('tutorial-step'),
+      tutorialTitle: document.getElementById('tutorial-title'),
+      tutorialCopy: document.getElementById('tutorial-copy'),
+      tutorialNext: document.getElementById('tutorial-next'),
+      tutorialSkip: document.getElementById('tutorial-skip'),
+      tutorialReplay: document.getElementById('tutorial-replay'),
+      tutorialObjectives: {
+        conditions: document.getElementById('tutorial-obj-conditions'),
+        k: document.getElementById('tutorial-obj-k'),
+        l: document.getElementById('tutorial-obj-l'),
+        start: document.getElementById('tutorial-obj-start'),
+      },
     };
 
     const state = {
@@ -110,7 +122,6 @@
       reboundReturning: false,
       blackout: false,
       failureType: '',
-      completeUnlocked: false,
       particles: [],
       history: [],
       replayFrames: [],
@@ -120,6 +131,41 @@
       allDone: false,
       observeStartT: 0,
       practiceMode: false,
+    };
+
+    const tutorial = {
+      active: false,
+      step: 0,
+      changedK: false,
+      changedL: false,
+      wasPracticeMode: false,
+      target: null,
+      steps: [
+        {
+          selector: '.panel-left',
+          title: '브리핑: 합격 조건 읽기',
+          copy: '번지 설계는 감으로 맞히는 게임이 아닙니다. 왼쪽의 최저점 여유, 최대 G, 체중을 먼저 읽고 안전 기준을 머릿속에 잡아두세요.',
+          next: '조건 확인'
+        },
+        {
+          selector: '.panel .card:first-of-type',
+          title: '튜닝: 두 값만 만집니다',
+          copy: '수정할 값은 k와 L입니다. k는 줄이 버티는 힘, L은 줄이 팽팽해지기 전 길이입니다. 두 슬라이더를 각각 한 번 움직여 보세요.',
+          next: '튜닝 완료'
+        },
+        {
+          selector: '#start-btn',
+          title: '테스트: 연습 점프',
+          copy: '이제 낙하 시작으로 결과를 확인합니다. 이 점프는 훈련용이라 점수와 시도 횟수에 반영되지 않습니다.',
+          next: '연습 점프'
+        },
+        {
+          selector: '.stage',
+          title: '판정: 다시 설계하기',
+          copy: '점프 후에는 최저점 여유와 최대 G를 봅니다. 낮게 떨어지면 L을 줄이거나 k를 높이고, G가 크면 k를 낮춰 더 부드럽게 만드세요.',
+          next: '실전 시작'
+        }
+      ]
     };
 
     let raf = null;
@@ -204,6 +250,134 @@
       ui.start.title = valid ? '' : 'k와 L을 0보다 크게 설정해야 낙하를 시작할 수 있습니다.';
     }
 
+    function syncPracticeButton() {
+      const btn = document.getElementById('practice-btn');
+      if (!btn) return;
+      btn.textContent = state.practiceMode ? '🎯 연습 중 (점수 없음)' : '🎯 연습 모드';
+      btn.classList.toggle('active', state.practiceMode);
+    }
+
+    function setPracticeMode(enabled, announce = false) {
+      state.practiceMode = enabled;
+      syncPracticeButton();
+      if (!announce) return;
+      setEvent(enabled
+        ? '연습 모드: 시도 횟수가 점수에 반영되지 않습니다. 시안색 링(◈)이 이론상 최저점입니다.'
+        : '정식 도전 모드: 이제부터의 시도 횟수가 점수에 반영됩니다.');
+    }
+
+    function clearTutorialTarget() {
+      if (tutorial.target) tutorial.target.classList.remove('tutorial-target');
+      document.querySelectorAll('.tutorial-pulse').forEach(node => node.classList.remove('tutorial-pulse'));
+      tutorial.target = null;
+    }
+
+    function updateTutorialObjectives() {
+      ui.tutorialObjectives.conditions?.classList.toggle('is-done', tutorial.step > 0);
+      ui.tutorialObjectives.k?.classList.toggle('is-done', tutorial.changedK);
+      ui.tutorialObjectives.l?.classList.toggle('is-done', tutorial.changedL);
+      ui.tutorialObjectives.start?.classList.toggle('is-done', tutorial.step > 2);
+    }
+
+    function updateTutorialSpotlight() {
+      if (!ui.tutorialOverlay || !tutorial.target) return;
+      const rect = tutorial.target.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      ui.tutorialOverlay.style.setProperty('--tutorial-x', `${x}px`);
+      ui.tutorialOverlay.style.setProperty('--tutorial-y', `${y}px`);
+    }
+
+    function renderTutorialStep() {
+      if (!ui.tutorialOverlay) return;
+      const item = tutorial.steps[tutorial.step];
+      if (!item) return;
+
+      clearTutorialTarget();
+      ui.tutorialOverlay.classList.toggle('is-review', tutorial.step === 3);
+      tutorial.target = document.querySelector(item.selector);
+      if (tutorial.target && tutorial.step !== 3) {
+        tutorial.target.classList.add('tutorial-target');
+        tutorial.target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
+      if (tutorial.step === 1) {
+        ui.kInput.closest('.range-row')?.classList.add('tutorial-pulse');
+        ui.lInput.closest('.range-row')?.classList.add('tutorial-pulse');
+      }
+
+      ui.tutorialStep.textContent = `훈련 ${tutorial.step + 1} / ${tutorial.steps.length}`;
+      ui.tutorialTitle.textContent = item.title;
+      ui.tutorialCopy.textContent = item.copy;
+      ui.tutorialNext.textContent = item.next;
+      ui.tutorialNext.disabled = tutorial.step === 1
+        ? !(tutorial.changedK && tutorial.changedL)
+        : tutorial.step === 2
+          ? ui.start.disabled
+          : false;
+      ui.tutorialOverlay.querySelectorAll('.tutorial-progress span').forEach((node, index) => {
+        node.classList.toggle('is-active', index === tutorial.step);
+        node.classList.toggle('is-done', index < tutorial.step);
+      });
+      updateTutorialObjectives();
+      ui.tutorialOverlay.classList.remove('hidden');
+      ui.tutorialOverlay.setAttribute('aria-hidden', 'false');
+      updateTutorialSpotlight();
+    }
+
+    function finishTutorial() {
+      tutorial.active = false;
+      clearTutorialTarget();
+      ui.tutorialOverlay?.classList.add('hidden');
+      ui.tutorialOverlay?.classList.remove('is-review');
+      ui.tutorialOverlay?.setAttribute('aria-hidden', 'true');
+      setPracticeMode(tutorial.wasPracticeMode, false);
+      resetRun();
+      setEvent('이제 실전입니다. 손님 조건을 보고 k와 L을 조절한 뒤 낙하를 시작하세요.');
+    }
+
+    function nextTutorialStep() {
+      if (!tutorial.active) return;
+      if (tutorial.step === 1 && !(tutorial.changedK && tutorial.changedL)) return;
+      if (tutorial.step === 2) {
+        if (!ui.start.disabled) startRun();
+        return;
+      }
+      if (tutorial.step >= tutorial.steps.length - 1) {
+        finishTutorial();
+        return;
+      }
+      tutorial.step += 1;
+      renderTutorialStep();
+    }
+
+    function markTutorialInput(kind) {
+      if (!tutorial.active || tutorial.step !== 1) return;
+      if (kind === 'k') tutorial.changedK = true;
+      if (kind === 'l') tutorial.changedL = true;
+      if (tutorial.changedK && tutorial.changedL) {
+        setEvent('좋아요. k와 L이 모두 설정됐습니다. 이제 연습 점프로 결과를 확인하세요.');
+      } else {
+        setEvent(kind === 'k' ? 'k를 조절했습니다. 이제 L도 움직여 줄 길이를 정해보세요.' : 'L을 조절했습니다. 이제 k도 움직여 탄성을 정해보세요.');
+      }
+      renderTutorialStep();
+    }
+
+    function startBungeeTutorial() {
+      if (!ui.tutorialOverlay) return;
+
+      tutorial.active = true;
+      tutorial.step = 0;
+      tutorial.changedK = false;
+      tutorial.changedL = false;
+      tutorial.wasPracticeMode = state.practiceMode;
+      setPracticeMode(true, false);
+      resetRun();
+      setEvent('튜토리얼: 손님 조건을 확인하고 k와 L을 한 번 조절해 보세요.');
+      renderTutorialStep();
+    }
+
+    window.startBungeeTutorial = startBungeeTutorial;
+
     function startRun() {
       if (state.mode === 'running') return;
       state.mode = 'running';
@@ -229,6 +403,13 @@
       ui.start.disabled = true;
       ui.modal.classList.remove('show');
       ui.roundEnd.classList.remove('show');
+      if (tutorial.active && tutorial.step === 2) {
+        setEvent('연습 점프 중입니다. 최저점 여유와 최대 G가 어떻게 변하는지 보세요.');
+        setTimeout(() => {
+          tutorial.step = 3;
+          renderTutorialStep();
+        }, 700);
+      }
       recordFrame();
       setEvent('처음에는 위치에너지가 운동에너지로 바뀌며 속력이 커집니다.');
       updateUi();
@@ -364,7 +545,10 @@
       else burst(success ? '#3ee68f' : '#ff5a6a');
 
       if (success) {
-        if (state.practiceMode) {
+        if (tutorial.active) {
+          const sc = calcScore(state.round, state.minClearance, state.maxG, 1);
+          setEvent(`훈련 점프 성공! 예상 점수는 약 ${sc.total}점입니다. 안내창의 실전 시작을 눌러 정식 도전으로 넘어가세요.`);
+        } else if (state.practiceMode) {
           const sc = calcScore(state.round, state.minClearance, state.maxG, 1);
           setEvent(`연습 성공! 이론 점수 약 ${sc.total}점. 연습 모드를 끄고 정식 도전하세요.`);
         } else {
@@ -463,15 +647,18 @@
 
       const cl = CLIENTS[state.round];
       if (state.minClearance !== Infinity) {
-        ui.safeClearance.textContent = `${formatDistance(state.minClearance)} / ${cl.minClearance.toFixed(1)} m`;
-        ui.safeClearance.style.color = state.minClearance >= cl.minClearance ? 'var(--green)' : 'var(--red)';
+        const ok = state.minClearance >= cl.minClearance;
+        ui.safeClearance.textContent = `${ok ? '✓' : '⚠'} ${formatDistance(state.minClearance)} / ${cl.minClearance.toFixed(1)} m`;
+        ui.safeClearance.style.color = ok ? 'var(--green)' : 'var(--red)';
       }
       if (state.maxG > 0) {
-        ui.safeG.textContent = `${state.maxG.toFixed(1)} G / ${cl.maxG.toFixed(1)} G`;
-        ui.safeG.style.color = state.maxG <= cl.maxG ? 'var(--green)' : 'var(--red)';
+        const gOk = state.maxG <= cl.maxG;
+        ui.safeG.textContent = `${gOk ? '✓' : '⚠'} ${state.maxG.toFixed(1)} G / ${cl.maxG.toFixed(1)} G`;
+        ui.safeG.style.color = gOk ? 'var(--green)' : 'var(--red)';
         if (cl.minG > 0) {
-          ui.safeMinG.textContent = `${state.maxG.toFixed(1)} G / ${cl.minG.toFixed(1)} G`;
-          ui.safeMinG.style.color = state.maxG >= cl.minG ? 'var(--green)' : 'var(--red)';
+          const minGOk = state.maxG >= cl.minG;
+          ui.safeMinG.textContent = `${minGOk ? '✓' : '⚠'} ${state.maxG.toFixed(1)} G / ${cl.minG.toFixed(1)} G`;
+          ui.safeMinG.style.color = minGOk ? 'var(--green)' : 'var(--red)';
         }
       }
       ui.attemptCount.textContent = `${state.attempts[state.round]}회`;
@@ -1370,17 +1557,7 @@ function createThreeRope() {
     }
 
     function togglePracticeMode() {
-      state.practiceMode = !state.practiceMode;
-      const btn = document.getElementById('practice-btn');
-      if (state.practiceMode) {
-        btn.textContent = '🎯 연습 중 (점수 없음)';
-        btn.classList.add('active');
-        setEvent('연습 모드: 시도 횟수가 점수에 반영되지 않습니다. 시안색 링(◈)이 이론상 최저점입니다.');
-      } else {
-        btn.textContent = '🎯 연습 모드';
-        btn.classList.remove('active');
-        setEvent('정식 도전 모드: 이제부터의 시도 횟수가 점수에 반영됩니다.');
-      }
+      setPracticeMode(!state.practiceMode, true);
     }
 
     function calcScore(roundIdx, clearance, maxG, attempts) {
@@ -1452,13 +1629,35 @@ function createThreeRope() {
         resetRun();
       } else {
         state.allDone = true;
-        state.completeUnlocked = true;
-        ui.complete.classList.remove('locked');
-        ui.complete.textContent = '미션 완료!';
         ui.roundEnd.classList.remove('show');
-        resetRun();
-        setEvent('3명의 손님 설계 완료! 미션 완료 버튼을 눌러 결과를 제출하세요.');
+        finishMissionAndReturn();
       }
+    }
+
+    function finishMissionAndReturn() {
+      const totalScore = Math.round(state.roundScores.reduce((s, r) => s + (r ? r.total : 0), 0));
+      const missionScore = ElabProgress.clampScore(totalScore);
+      ElabProgress.saveMission(3, 'clear', missionScore);
+      if (missionScore >= 900 && window.ElabBadges) window.ElabBadges.unlockWithToast('precision');
+      MissionUI.askCoachQuestion({
+        speaker: '코치 확인 퀴즈',
+        question: '번지줄이 최대로 늘어난 순간, 점퍼 속도는 거의 0이야. 이 순간 에너지 상태는?',
+        choices: [
+          { label: 'Ep와 Ek 대부분이 탄성에너지(Es = ½kx²)로 전환된 상태', correct: true,
+            feedback: '맞아. 속도≈0이면 Ek≈0이고 높이도 낮아져 Ep도 줄었어. 그 에너지가 모두 줄의 탄성에너지로 저장된 거야.' },
+          { label: 'Ek가 최대이고 Es = 0인 상태', correct: false,
+            feedback: '줄이 최대로 늘어난 순간은 속도가 가장 느릴 때야. Ek가 아닌 Es가 최대야.' },
+          { label: '세 에너지 Ep, Ek, Es가 각각 균등하게 나뉜 상태', correct: false,
+            feedback: '에너지 배분은 물리 조건에 따라 달라. 이 순간은 Es가 압도적으로 크고 Ek는 거의 0이야.' }
+        ],
+        continueLabel: '미션 완료 →'
+      }).then(() => {
+        MissionUI.showClearAndReturn({
+          score: missionScore,
+          formula: 'Es = ½kx²',
+          desc: '탄성 위치에너지 - 늘어난 줄에 에너지가 저장된다'
+        });
+      });
     }
 
     let _lastClientRound = -1;
@@ -1484,8 +1683,8 @@ function createThreeRope() {
       });
     }
 
-    ui.kInput.addEventListener('input', () => { resetRun(); updateStartBtn(); });
-    ui.lInput.addEventListener('input', () => { resetRun(); updateStartBtn(); });
+    ui.kInput.addEventListener('input', () => { resetRun(); updateStartBtn(); markTutorialInput('k'); });
+    ui.lInput.addEventListener('input', () => { resetRun(); updateStartBtn(); markTutorialInput('l'); });
     ui.dragInput.addEventListener('change', resetRun);
     ui.start.addEventListener('click', startRun);
     ui.reset.addEventListener('click', resetRun);
@@ -1501,9 +1700,6 @@ function createThreeRope() {
       state.attempts = [0, 0, 0];
       state.roundScores = [null, null, null];
       state.allDone = false;
-      state.completeUnlocked = false;
-      ui.complete.classList.add('locked');
-      ui.complete.textContent = '미션 완료 (3라운드 후 해금)';
       ui.roundEnd.classList.remove('show');
       resetRun();
       setEvent('전체 재도전! 더 높은 점수를 노려보세요.');
@@ -1512,35 +1708,9 @@ function createThreeRope() {
     ui.reNextBtn.addEventListener('click', goNextRound);
     ui.reRetryBtn.addEventListener('click', retryAll);
     document.getElementById('practice-btn').addEventListener('click', togglePracticeMode);
-    ui.complete.addEventListener('click', () => {
-      if (!state.completeUnlocked) {
-        setEvent('3라운드를 모두 완료하면 미션 완료가 열립니다.');
-        return;
-      }
-      const totalScore = Math.round(state.roundScores.reduce((s, r) => s + (r ? r.total : 0), 0));
-      const missionScore = ElabProgress.clampScore(totalScore);
-      ElabProgress.saveMission(3, 'clear', missionScore);
-      if (missionScore >= 900 && window.ElabBadges) window.ElabBadges.unlockWithToast('precision');
-      MissionUI.askCoachQuestion({
-        speaker: '코치 확인 퀴즈',
-        question: '번지줄이 최대로 늘어난 순간, 점퍼 속도는 거의 0이야. 이 순간 에너지 상태는?',
-        choices: [
-          { label: 'Ep와 Ek 대부분이 탄성에너지(Es = ½kx²)로 전환된 상태', correct: true,
-            feedback: '맞아. 속도≈0이면 Ek≈0이고 높이도 낮아져 Ep도 줄었어. 그 에너지가 모두 줄의 탄성에너지로 저장된 거야.' },
-          { label: 'Ek가 최대이고 Es = 0인 상태', correct: false,
-            feedback: '줄이 최대로 늘어난 순간은 속도가 가장 느릴 때야. Ek가 아닌 Es가 최대야.' },
-          { label: '세 에너지 Ep, Ek, Es가 각각 균등하게 나뉜 상태', correct: false,
-            feedback: '에너지 배분은 물리 조건에 따라 달라. 이 순간은 Es가 압도적으로 크고 Ek는 거의 0이야.' }
-        ],
-        continueLabel: '미션 완료 →'
-      }).then(() => {
-        MissionUI.showClearAndReturn({
-          score: missionScore,
-          formula: 'Es = ½kx²',
-          desc: '탄성 위치에너지 - 늘어난 줄에 에너지가 저장된다'
-        });
-      });
-    });
+    ui.tutorialReplay?.addEventListener('click', startBungeeTutorial);
+    ui.tutorialNext?.addEventListener('click', nextTutorialStep);
+    ui.tutorialSkip?.addEventListener('click', finishTutorial);
 
     window.addEventListener('resize', resize);
     resize();

@@ -32,6 +32,7 @@ const canvas = document.getElementById('gameCanvas');
         const progressPercent = document.getElementById('progress-percent');
         const progressCurrent = document.getElementById('progress-current');
         const progressTotal = document.getElementById('progress-total');
+        const keyboardStatus = document.getElementById('keyboard-status');
 
         const ICE_QUALITIES = [
             { label: '최상급', emoji: '💎', mu: 0.008, color: '#60a5fa', desc: '완벽히 관리된 올림픽 빙판' },
@@ -74,7 +75,64 @@ const canvas = document.getElementById('gameCanvas');
             currentMu: PHYSICS.mu_base,
             targetK: 0,
             displayMax: 1,
-            energyHistory: []
+            energyHistory: [],
+            keyboardSweeping: false
+        };
+
+        const tutorial = {
+            active: false,
+            step: 0,
+            target: null,
+            overlay: null,
+            steps: [
+                {
+                    selector: '#controls-panel',
+                    title: '1. 빙질을 보고 힘을 조절합니다',
+                    copy: '라운드마다 빙질과 마찰계수 μ가 달라집니다. 빙질을 확인한 뒤 F 슬라이더를 움직여 이번 투구에 쓸 힘을 정하세요.',
+                    bullets: [
+                        '마찰이 클수록 더 큰 힘이나 긴 누르기가 필요합니다.',
+                        '빙질이 바뀌면 최소 에너지 힌트도 달라집니다.',
+                        'F 슬라이더를 한 번 움직이면 다음 단계로 넘어갑니다.'
+                    ],
+                    next: 'F 슬라이더를 조절하세요',
+                    waitFor: 'force-change'
+                },
+                {
+                    selector: '#progress-panel',
+                    title: '2. 투구선 전에 손을 뗍니다',
+                    copy: '화면이나 SPACE를 누르고 있으면 스톤이 가속합니다. 진행 표시를 보면서 투구선을 넘기 전에 손을 떼세요.',
+                    bullets: [
+                        '화면을 누른 채로 출발 준비를 합니다.',
+                        '키보드는 SPACE를 누르고 있다가 떼면 됩니다.',
+                        '실제로 투구하면 다음 단계로 넘어갑니다.'
+                    ],
+                    next: '누르고 있다가 투구하세요',
+                    waitFor: 'shot-release'
+                },
+                {
+                    selector: '#stats-panel',
+                    title: '3. 이동 중에는 스위핑합니다',
+                    copy: '스톤이 움직이는 동안 ←→ 또는 A/D를 누르거나, 스톤 앞쪽 빙판을 문질러 스위핑하세요.',
+                    bullets: [
+                        '스위핑은 마찰을 줄여 더 멀리 가게 만듭니다.',
+                        'K와 Q 값을 보며 에너지 변화를 확인하세요.',
+                        '스위핑을 시작하면 마지막 단계로 넘어갑니다.'
+                    ],
+                    next: '스위핑을 시작하세요',
+                    waitFor: 'sweep-start'
+                },
+                {
+                    selector: '#stats-panel',
+                    title: '4. 목표 안에 멈추면 성공입니다',
+                    copy: '이제 스톤이 하우스 안에 멈추도록 에너지를 관리하세요. 너무 많은 힘이나 스위핑은 목표를 지나치게 만들 수 있습니다.',
+                    bullets: [
+                        '스톤이 멈추면 점수와 에너지 결과가 나옵니다.',
+                        '다음 라운드에는 빙질이 다시 바뀔 수 있습니다.',
+                        '힘, 누르는 시간, 스위핑을 함께 조절해 보세요.'
+                    ],
+                    next: '튜토리얼 종료'
+                }
+            ]
         };
 
         let _etGraph = null;
@@ -153,9 +211,98 @@ const canvas = document.getElementById('gameCanvas');
 
         fSlider.addEventListener('input', (e) => {
             fDisplay.innerText = e.target.value;
+            advanceMission2Tutorial('force-change');
         });
 
         btnReset.addEventListener('click', handleResetClick);
+
+        function clearTutorialTarget() {
+            if (tutorial.target) tutorial.target.classList.remove('m2-tutorial-target');
+            tutorial.target = null;
+        }
+
+        function updateTutorialSpotlight(overlay) {
+            if (!overlay || !tutorial.target) return;
+            const rect = tutorial.target.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            const r = Math.max(120, Math.min(360, Math.max(rect.width, rect.height) / 2 + 56));
+            overlay.style.setProperty('--tutorial-x', `${x}px`);
+            overlay.style.setProperty('--tutorial-y', `${y}px`);
+            overlay.style.setProperty('--tutorial-r', `${r}px`);
+        }
+
+        function ensureTutorialOverlay() {
+            if (tutorial.overlay) return tutorial.overlay;
+            const overlay = document.createElement('div');
+            overlay.id = 'm2-tutorial-overlay';
+            overlay.className = 'm2-tutorial-overlay hidden';
+            document.body.appendChild(overlay);
+            tutorial.overlay = overlay;
+            return overlay;
+        }
+
+        function renderTutorial() {
+            const overlay = ensureTutorialOverlay();
+            const item = tutorial.steps[tutorial.step];
+            clearTutorialTarget();
+            tutorial.target = document.querySelector(item.selector);
+            if (tutorial.target) tutorial.target.classList.add('m2-tutorial-target');
+            updateTutorialSpotlight(overlay);
+
+            overlay.innerHTML = `
+                <div class="m2-tutorial-panel" role="dialog" aria-modal="false" aria-labelledby="m2-tutorial-title">
+                    <span class="m2-tutorial-kicker">Mission 02 Training ${tutorial.step + 1} / ${tutorial.steps.length}</span>
+                    <h2 id="m2-tutorial-title">${item.title}</h2>
+                    <p>${item.copy}</p>
+                    <ul class="m2-tutorial-list">
+                        ${item.bullets.map(text => `<li>${text}</li>`).join('')}
+                    </ul>
+                    <div class="m2-tutorial-actions">
+                        <button id="m2-tutorial-skip" type="button">건너뛰기</button>
+                        ${item.waitFor
+                            ? `<span class="m2-tutorial-wait" aria-live="polite">${item.next}</span>`
+                            : `<button id="m2-tutorial-next" class="primary" type="button">${item.next}</button>`
+                        }
+                    </div>
+                </div>
+            `;
+            overlay.classList.remove('hidden');
+            overlay.querySelector('#m2-tutorial-skip').addEventListener('click', finishMission2Tutorial);
+            const nextButton = overlay.querySelector('#m2-tutorial-next');
+            if (nextButton) nextButton.addEventListener('click', nextMission2TutorialStep);
+        }
+
+        function startMission2Tutorial() {
+            tutorial.active = true;
+            tutorial.step = 0;
+            renderTutorial();
+        }
+
+        function finishMission2Tutorial() {
+            tutorial.active = false;
+            clearTutorialTarget();
+            ensureTutorialOverlay().classList.add('hidden');
+            announceKeyboardStatus('튜토리얼이 끝났습니다. 화면을 누르거나 SPACE를 눌러 투구를 시작하세요.');
+        }
+
+        function nextMission2TutorialStep() {
+            if (tutorial.step >= tutorial.steps.length - 1) {
+                finishMission2Tutorial();
+                return;
+            }
+            tutorial.step += 1;
+            renderTutorial();
+        }
+
+        function advanceMission2Tutorial(action) {
+            if (!tutorial.active) return;
+            const item = tutorial.steps[tutorial.step];
+            if (item.waitFor !== action) return;
+            nextMission2TutorialStep();
+        }
+
+        window.startMission2Tutorial = startMission2Tutorial;
 
         function handleResetClick() {
             if (GAME.finished) {
@@ -270,6 +417,7 @@ const canvas = document.getElementById('gameCanvas');
             state.cameraX = 0;
             state.currentMu = PHYSICS.mu_base;
             state.energyHistory = [];
+            state.keyboardSweeping = false;
             particles = [];
             iceScars = [];
 
@@ -315,6 +463,7 @@ const canvas = document.getElementById('gameCanvas');
 
             if (clientX > stoneScreenX + 5 && clientX < stoneScreenX + 180 && Math.abs(clientY - state.house.y) < 130) {
                 state.isSweeping = true;
+                advanceMission2Tutorial('sweep-start');
                 sweepHint.style.opacity = '0';
 
                 if (state.lastPointer.time > 0) {
@@ -346,11 +495,71 @@ const canvas = document.getElementById('gameCanvas');
                 statusInd.innerText = '● IN PLAY';
                 statusInd.style.color = '#005eb8';
                 sweepHint.style.opacity = '1';
+                advanceMission2Tutorial('shot-release');
             }
 
             state.isSweeping = false;
             state.sweepSpeed = 0;
             state.lastPointer.time = 0;
+        }
+
+        function announceKeyboardStatus(text) {
+            if (keyboardStatus) keyboardStatus.textContent = text;
+        }
+
+        function startKeyboardSweep() {
+            if (state.phase !== 'moving') return;
+            state.keyboardSweeping = true;
+            state.isSweeping = true;
+            state.sweepSpeed = Math.max(state.sweepSpeed, 1.15);
+            sweepHint.style.opacity = '0';
+            advanceMission2Tutorial('sweep-start');
+            const stoneScreenX = state.stone.x * PHYSICS.scale - state.cameraX;
+            generateParticles(stoneScreenX + 92, state.house.y);
+        }
+
+        function stopKeyboardSweep() {
+            state.keyboardSweeping = false;
+            state.isSweeping = false;
+        }
+
+        function handleKeyboardDown(event) {
+            if (event.repeat && event.code !== 'ArrowLeft' && event.code !== 'ArrowRight' && event.code !== 'KeyA' && event.code !== 'KeyD') return;
+
+            if (event.code === 'Space') {
+                event.preventDefault();
+                if (state.phase === 'ready') {
+                    handlePointerDown(event);
+                    announceKeyboardStatus('투구 시작. 스페이스 키를 떼면 스톤을 놓습니다.');
+                } else if (state.phase === 'moving') {
+                    startKeyboardSweep();
+                    announceKeyboardStatus('스위핑 중. 마찰이 줄어 스톤이 더 멀리 갑니다.');
+                }
+                return;
+            }
+
+            if (event.code === 'ArrowLeft' || event.code === 'ArrowRight' || event.code === 'KeyA' || event.code === 'KeyD') {
+                event.preventDefault();
+                startKeyboardSweep();
+            }
+        }
+
+        function handleKeyboardUp(event) {
+            if (event.code === 'Space') {
+                event.preventDefault();
+                if (state.phase === 'pushing') {
+                    handlePointerUp();
+                    announceKeyboardStatus('스톤을 놓았습니다. 방향키나 A, D로 스위핑하세요.');
+                } else if (state.phase === 'moving') {
+                    stopKeyboardSweep();
+                }
+                return;
+            }
+
+            if (event.code === 'ArrowLeft' || event.code === 'ArrowRight' || event.code === 'KeyA' || event.code === 'KeyD') {
+                event.preventDefault();
+                stopKeyboardSweep();
+            }
         }
 
         canvas.addEventListener('mousedown', handlePointerDown);
@@ -359,6 +568,8 @@ const canvas = document.getElementById('gameCanvas');
         canvas.addEventListener('touchmove', handlePointerMove, { passive: true });
         window.addEventListener('mouseup', handlePointerUp);
         window.addEventListener('touchend', handlePointerUp);
+        window.addEventListener('keydown', handleKeyboardDown);
+        window.addEventListener('keyup', handleKeyboardUp);
 
         function generateParticles(x, y) {
             const count = state.isSweeping ? 8 : 3;
@@ -391,6 +602,10 @@ const canvas = document.getElementById('gameCanvas');
             if (dt > 0.1) return;
             if (state.phase !== 'pushing' && state.phase !== 'moving') return;
 
+            if (state.keyboardSweeping && state.phase === 'moving') {
+                state.isSweeping = true;
+                state.sweepSpeed = Math.max(state.sweepSpeed, 1.1);
+            }
             state.sweepSpeed = Math.max(0, state.sweepSpeed - 15 * dt);
 
             let targetMu = PHYSICS.mu_base;

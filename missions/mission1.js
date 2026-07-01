@@ -83,6 +83,50 @@ const state = {
   particles: []
 };
 
+const tutorial = {
+  active: false,
+  step: 0,
+  target: null,
+  steps: [
+    {
+      selector: '.score-strip',
+      kicker: 'Mission 01 - Training',
+      title: '목표는 착지 5회',
+      goal: '파이프를 오르내리며 공중 자세를 맞추고 착지 5회를 성공하면 미션을 완료할 수 있습니다.',
+      controls: [
+        ['목표', '착지 5회 성공'],
+        ['점수', '착지 각도와 속도 보존이 좋을수록 상승'],
+        ['시간', '75초 안에 최대한 안정적으로 착지']
+      ],
+      next: '조작 보기'
+    },
+    {
+      selector: '.control-panel',
+      kicker: 'Mission 01 - Controls',
+      title: 'Space와 방향키를 씁니다',
+      goal: '바닥이나 립 근처에서 Space를 누르면 에너지를 더하고, 공중에서는 방향키로 보드 각도를 조절합니다.',
+      controls: [
+        ['SPACE', '바닥 펌프 / 립 펌프'],
+        ['← →', '공중에서 보드 각도 조절'],
+        ['착지선', '초록 착지선과 보드 각도를 맞추기']
+      ],
+      next: '에너지 보기'
+    },
+    {
+      selector: '.energy-panel',
+      kicker: 'Mission 01 - Energy',
+      title: 'Ep와 Ek를 관찰하세요',
+      goal: '올라갈 때는 위치에너지 Ep가 커지고, 내려올 때는 운동에너지 Ek가 커집니다. 합이 어떻게 유지되는지 보세요.',
+      controls: [
+        ['Ep', '높이에 따른 위치에너지'],
+        ['Ek', '속도에 따른 운동에너지'],
+        ['Ep + Ek', '두 에너지의 합']
+      ],
+      next: '훈련 시작'
+    }
+  ]
+};
+
 const flakes = Array.from({ length: 90 }, (_, i) => ({
   x: fract(Math.sin(i * 91.7) * 43758.5453),
   y: fract(Math.sin(i * 43.2 + 8.1) * 24634.6345),
@@ -196,6 +240,89 @@ function setEvent(text, seconds = 1.4) {
   ui.event.textContent = text;
   state.messageTimer = seconds;
 }
+
+function clearTutorialTarget() {
+  if (tutorial.target) tutorial.target.classList.remove('m1-tutorial-target');
+  tutorial.target = null;
+}
+
+function updateTutorialSpotlight(overlay) {
+  if (!overlay || !tutorial.target) return;
+  const rect = tutorial.target.getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+  const r = Math.max(120, Math.min(360, Math.max(rect.width, rect.height) / 2 + 56));
+  overlay.style.setProperty('--tutorial-x', `${x}px`);
+  overlay.style.setProperty('--tutorial-y', `${y}px`);
+  overlay.style.setProperty('--tutorial-r', `${r}px`);
+}
+
+function renderTutorial() {
+  const overlay = document.getElementById('game-tutorial');
+  if (!overlay) return;
+  const item = tutorial.steps[tutorial.step];
+  clearTutorialTarget();
+  tutorial.target = document.querySelector(item.selector);
+  if (tutorial.target) tutorial.target.classList.add('m1-tutorial-target');
+  updateTutorialSpotlight(overlay);
+
+  overlay.innerHTML = `
+    <div class="gt-card">
+      <div class="gt-kicker">${item.kicker}</div>
+      <h2 class="gt-title">${item.title}</h2>
+      <div class="gt-progress" aria-hidden="true">
+        ${tutorial.steps.map((_, index) => `<span class="${index < tutorial.step ? 'is-done' : index === tutorial.step ? 'is-active' : ''}"></span>`).join('')}
+      </div>
+      <div class="gt-goal">
+        <span class="gt-goal-icon">✓</span>
+        <div>
+          <strong>${item.title}</strong>
+          <p>${item.goal}</p>
+        </div>
+      </div>
+      <div class="gt-controls">
+        ${item.controls.map(([key, desc]) => `
+          <div class="gt-ctrl-row">
+            <kbd>${key}</kbd>
+            <div><strong>${key}</strong><span>${desc}</span></div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="gt-action-row">
+        <button id="gt-skip" class="gt-skip-btn" type="button">건너뛰기</button>
+        <button id="gt-start" class="gt-start-btn" type="button">${item.next}</button>
+      </div>
+    </div>
+  `;
+  overlay.classList.remove('hidden');
+  overlay.querySelector('#gt-skip').addEventListener('click', finishTutorial);
+  overlay.querySelector('#gt-start').addEventListener('click', nextTutorialStep);
+}
+
+function startMission1Tutorial() {
+  tutorial.active = true;
+  tutorial.step = 0;
+  renderTutorial();
+}
+
+function finishTutorial() {
+  const overlay = document.getElementById('game-tutorial');
+  tutorial.active = false;
+  clearTutorialTarget();
+  if (overlay) overlay.classList.add('hidden');
+  setEvent('시작 버튼을 누르고 Space와 방향키로 착지 5회를 노려보세요.', 2.2);
+}
+
+function nextTutorialStep() {
+  if (tutorial.step >= tutorial.steps.length - 1) {
+    finishTutorial();
+    return;
+  }
+  tutorial.step += 1;
+  renderTutorial();
+}
+
+window.startMission1Tutorial = startMission1Tutorial;
 
 function startRun() {
   resetRun('running');

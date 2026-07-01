@@ -1,5 +1,3 @@
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-
 :root {
   --ink: #f8fbff;
   --muted: #aebfd2;
@@ -28,7 +26,7 @@ body {
   overflow: hidden;
   background: #07111f;
   color: var(--ink);
-  font-family: "Pretendard", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
   letter-spacing: 0;
   touch-action: none;
   user-select: none;
@@ -593,12 +591,15 @@ input[type="range"] {
   position: fixed;
   inset: 0;
   z-index: 9000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(3, 8, 18, 0.78);
-  backdrop-filter: blur(6px);
-  animation: gtFadeIn .3s ease both;
+  display: block;
+  background:
+    radial-gradient(
+      circle at var(--tutorial-x, 50%) var(--tutorial-y, 50%),
+      transparent 0 var(--tutorial-r, 170px),
+      rgba(3, 8, 18, 0.18) calc(var(--tutorial-r, 170px) + 70px),
+      rgba(3, 8, 18, 0.58) 100%
+    );
+  pointer-events: none;
 }
 
 .game-tutorial.hidden {
@@ -611,18 +612,19 @@ input[type="range"] {
 }
 
 .gt-card {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
   background: rgba(10, 22, 40, 0.96);
   border: 1px solid rgba(48, 213, 255, 0.22);
-  border-radius: 18px;
-  padding: 32px 38px 28px;
-  width: min(520px, calc(100vw - 48px));
+  border-radius: 12px;
+  padding: 16px 18px;
+  width: min(520px, calc(100vw - 32px));
+  max-height: min(54vh, 420px);
+  overflow-y: auto;
   box-shadow: 0 0 60px rgba(48, 213, 255, 0.12);
-  animation: gtSlideUp .35s ease both;
-}
-
-@keyframes gtSlideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to   { transform: none; opacity: 1; }
+  pointer-events: auto;
 }
 
 .gt-kicker {
@@ -635,9 +637,9 @@ input[type="range"] {
 }
 
 .gt-title {
-  font-size: 1.4rem;
+  font-size: 1.15rem;
   font-weight: 900;
-  margin: 0 0 20px;
+  margin: 0 0 12px;
   color: var(--ink);
 }
 
@@ -648,8 +650,8 @@ input[type="range"] {
   background: rgba(62, 230, 143, 0.08);
   border: 1px solid rgba(62, 230, 143, 0.22);
   border-radius: 10px;
-  padding: 14px 16px;
-  margin-bottom: 18px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
 }
 
 .gt-goal-icon {
@@ -675,8 +677,8 @@ input[type="range"] {
 .gt-controls {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 24px;
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
 .gt-ctrl-row {
@@ -731,4 +733,50 @@ input[type="range"] {
 
 .gt-start-btn:hover {
   opacity: .88;
+}
+
+.gt-progress {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 0 0 18px;
+}
+
+.gt-progress span {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.gt-progress span.is-active,
+.gt-progress span.is-done {
+  background: var(--cyan);
+}
+
+.gt-action-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.gt-skip-btn {
+  padding: 13px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.gt-action-row .gt-start-btn {
+  width: auto;
+  min-width: 150px;
+}
+
+.m1-tutorial-target {
+  outline: 3px solid rgba(255, 207, 91, 0.95);
+  outline-offset: 6px;
+  box-shadow: 0 0 18px rgba(255, 207, 91, 0.38);
 }
