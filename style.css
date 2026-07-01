@@ -1675,7 +1675,11 @@ kbd {
 .reflection-choice:focus-visible {
   border-color: rgba(190, 132, 255, 0.55);
   background: rgba(190, 132, 255, 0.13);
-  outline: none;
+}
+
+.reflection-choice:focus-visible {
+  outline: 2px solid rgba(190, 132, 255, 0.9);
+  outline-offset: 2px;
 }
 
 .reflection-choice.is-correct {
@@ -2670,5 +2674,14 @@ kbd {
 
   #rankModal .rank-row-v2::after {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }

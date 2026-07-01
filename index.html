@@ -6,7 +6,7 @@
   <title>Energy Lab — 선수 성장 연구소</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="style.css?v=9">
-  <link rel="stylesheet" href="ranking-podium.css?v=11">
+  <link rel="stylesheet" href="ranking-podium.css?v=12">
   <script>if(new URLSearchParams(location.search).get('back')==='1')document.documentElement.classList.add('is-returning');</script>
 </head>
 <body>
@@ -52,6 +52,7 @@
       <div class="hud-right">
         <button id="openNotebook" class="hud-notebook-btn" type="button">📓 노트</button>
         <button id="openBadges" class="hud-notebook-btn" type="button">🏅 배지</button>
+        <button id="openHelp" class="hud-notebook-btn" type="button">❓ 도움말</button>
         <div class="score-pill">
           <span>총점</span>
           <strong id="totalScore">0 pt</strong>
@@ -89,6 +90,7 @@
     </aside>
 
     <footer class="bottom-hint">
+      <div><kbd>SHIFT</kbd> + <kbd>←</kbd><kbd>→</kbd> 달리기</div>
       <div><kbd>←</kbd><kbd>→</kbd> 또는 <kbd>A</kbd><kbd>D</kbd> 이동</div>
       <div><kbd>SPACE</kbd> 근처 시설 입장</div>
     </footer>

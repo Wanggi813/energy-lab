@@ -3,13 +3,13 @@
 const SAVE_KEY = 'elab-progress-v2';
 const RANK_KEY = 'athlete-lab-ranking-v1';
 const RETURN_ZONE_KEY = 'athlete-lab-return-zone';
-const LAST_ZONE_KEY = 'athlete-lab-last-zone';
 const TUTORIAL_KEY = 'elab-tutorial-v1';
 
 const TUTORIAL_STEPS = [
   '안녕! 나는 에너지 연구소 코치야. 에너지 스포츠 챔피언십까지 딱 한 달 남았어.',
   '← → 키 (또는 A, D)로 이동하고, 포털 근처에서 SPACE를 누르면 입장할 수 있어.',
   '각 구역에서 에너지 실험을 완료하며 서윤, 지훈, 민재를 훈련시켜봐!',
+  '우측 하단의 📓 노트 버튼으로 완료한 미션의 개념과 점수를 다시 볼 수 있고, 🏅 배지 버튼으로 지금까지 모은 배지를 확인할 수 있어.',
   '번지 타워와 선수 숙소는 이전 훈련을 마쳐야 열려. 우선 동계 훈련장부터 가보자!'
 ];
 
@@ -88,6 +88,7 @@ const CONCEPTS = [
   }
 ];
 const MOVE_SPEED = 0.09;
+const RUN_SPEED = 0.18;
 const DEFAULT_SCENE_ASPECT = 8 / 3;
 
 const MISSIONS = [
@@ -254,6 +255,7 @@ const state = {
   x: 50,
   facing: 1,
   walking: false,
+  running: false,
   nearest: null,
   cameraX: 0,
   worldWidth: 0,
@@ -292,6 +294,7 @@ const el = {
   openNotebook: document.getElementById('openNotebook'),
   closeNotebook: document.getElementById('closeNotebook'),
   openBadges: document.getElementById('openBadges'),
+  openHelp: document.getElementById('openHelp'),
   closeBadge: document.getElementById('closeBadge'),
   badgeModal: document.getElementById('badgeModal'),
   badgeGrid: document.getElementById('badgeGrid'),
@@ -311,6 +314,7 @@ const el = {
 const sprite = {
   idle: new Image(),
   walk: new Image(),
+  run: new Image(),
   frameSize: 256,
   frames: 25
 };
@@ -379,6 +383,12 @@ function showLockedMessage(text) {
 function hideStoryBubble() {
   clearTimeout(state.storyTimeout);
   el.storyBubble.classList.add('hidden');
+}
+
+function openHelp() {
+  state.keys.clear();
+  state.tutorialStep = 0;
+  showTutorialStep();
 }
 
 function openNotebookModal() {
@@ -709,7 +719,6 @@ function setZone(zoneId, spawnX) {
   state.x = Number.isFinite(spawnX) ? spawnX : zone.spawnX;
   state.nearest = null;
 
-  localStorage.setItem(LAST_ZONE_KEY, state.zoneId);
   el.sceneWorld.style.setProperty('--scene-image', `url("${zone.image}")`);
   el.stage.style.setProperty('--floor-bottom', `${zone.floor}%`);
   el.zoneName.textContent = zone.name;
@@ -916,7 +925,6 @@ function enterMission(spot) {
   const mission = getMission(spot.missionId);
   if (!mission) return;
   localStorage.setItem(RETURN_ZONE_KEY, state.zoneId);
-  localStorage.setItem(LAST_ZONE_KEY, state.zoneId);
   window.location.href = mission.route;
 }
 
@@ -935,22 +943,31 @@ function shouldReflectBeforePortal(spot) {
 function updateMovement() {
   if (state.reflectionOpen) {
     state.walking = false;
+    state.running = false;
     return;
   }
 
   const left = state.keys.has('ArrowLeft') || state.keys.has('KeyA') || state.keys.has('TouchLeft');
   const right = state.keys.has('ArrowRight') || state.keys.has('KeyD') || state.keys.has('TouchRight');
+  const arrowLeft = state.keys.has('ArrowLeft');
+  const arrowRight = state.keys.has('ArrowRight');
+  const shift = state.keys.has('ShiftLeft') || state.keys.has('ShiftRight');
+  const running = shift && ((arrowLeft && !right) || (arrowRight && !left));
+  const speed = running ? RUN_SPEED : MOVE_SPEED;
 
   if (left && !right) {
-    state.x = Math.max(4, state.x - MOVE_SPEED);
+    state.x = Math.max(4, state.x - speed);
     state.facing = -1;
     state.walking = true;
+    state.running = running;
   } else if (right && !left) {
-    state.x = Math.min(96, state.x + MOVE_SPEED);
+    state.x = Math.min(96, state.x + speed);
     state.facing = 1;
     state.walking = true;
+    state.running = running;
   } else {
     state.walking = false;
+    state.running = false;
   }
 }
 
@@ -958,10 +975,12 @@ function loadSprites() {
   let loaded = 0;
   const done = () => {
     loaded += 1;
-    state.spritesReady = loaded === 2;
+    state.spritesReady = loaded === 3;
   };
   sprite.idle.onload = done;
   sprite.walk.onload = done;
+  sprite.run.onload = done;
+  sprite.run.src = 'image/코치-run.png';
   sprite.idle.src = 'image/코치-idle.png';
   sprite.walk.src = 'image/코치-walk.png';
 }
@@ -974,7 +993,7 @@ function drawCoach() {
   if (!state.spritesReady) return;
 
   state.spriteTick += 1;
-  const speed = state.walking ? 7 : 9;
+  const speed = state.running ? 5 : state.walking ? 7 : 9;
   if (state.spriteTick >= speed) {
     if (state.walking) {
       state.spriteFrame = (state.spriteFrame + 1) % sprite.frames;
@@ -991,7 +1010,7 @@ function drawCoach() {
     state.spriteTick = 0;
   }
 
-  const image = state.walking ? sprite.walk : sprite.idle;
+  const image = state.running ? sprite.run : state.walking ? sprite.walk : sprite.idle;
   const col = state.spriteFrame % 5;
   const row = Math.floor(state.spriteFrame / 5);
   if (state.facing < 0) {
@@ -1192,17 +1211,56 @@ async function saveRank() {
 
   el.rankPostSave.classList.toggle('hidden', total <= 0);
 
-  if (total > prevBest && total > 0) {
+  if (total > 0) {
     const badge = document.getElementById('myGradeBadge');
     badge.classList.remove('grade-new-best');
     void badge.offsetWidth;
     badge.classList.add('grade-new-best');
-    const msg = document.createElement('div');
-    msg.className = 'new-best-toast';
-    msg.textContent = '🎉 신기록!';
-    document.querySelector('#rankModal .modal-panel').appendChild(msg);
-    setTimeout(() => msg.remove(), 2000);
+    showSaveCelebration(getGrade(total), total > prevBest);
   }
+}
+
+function showSaveCelebration(grade, isNewBest) {
+  const panel = document.querySelector('#rankModal .rank-modal-panel') || document.querySelector('#rankModal .modal-panel');
+  if (!panel) return;
+
+  const label = isNewBest ? '🎉 신기록!' : '✅ 저장 완료!';
+  const msg = document.createElement('div');
+  msg.className = `save-toast save-toast-${grade.label.toLowerCase()}`;
+  msg.innerHTML = `<span class="save-toast-grade">${grade.label}</span><span>${label}</span>`;
+  msg.style.setProperty('--grade-color', grade.color);
+  panel.appendChild(msg);
+  setTimeout(() => msg.remove(), 2200);
+
+  if (grade.label === 'S' || grade.label === 'A') {
+    burstConfetti(panel, grade.label === 'S' ? 70 : 40);
+  }
+}
+
+const CONFETTI_COLORS = ['#f3c451', '#3ee68f', '#4fc3ff', '#ff6b6b', '#ffffff'];
+
+function burstConfetti(panel, count) {
+  const layer = document.createElement('div');
+  layer.className = 'confetti-layer';
+  for (let i = 0; i < count; i += 1) {
+    const piece = document.createElement('span');
+    piece.className = 'confetti-piece';
+    const left = Math.random() * 100;
+    const delay = Math.random() * 0.3;
+    const duration = 1.6 + Math.random() * 1.1;
+    const drift = (Math.random() - 0.5) * 160;
+    const rotate = Math.random() * 720 - 360;
+    const color = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+    piece.style.setProperty('--left', `${left}%`);
+    piece.style.setProperty('--delay', `${delay}s`);
+    piece.style.setProperty('--duration', `${duration}s`);
+    piece.style.setProperty('--drift', `${drift}px`);
+    piece.style.setProperty('--rotate', `${rotate}deg`);
+    piece.style.setProperty('--color', color);
+    layer.appendChild(piece);
+  }
+  panel.appendChild(layer);
+  setTimeout(() => layer.remove(), 3200);
 }
 
 function resetRunAfterRanking() {
@@ -1211,7 +1269,6 @@ function resetRunAfterRanking() {
 
   localStorage.removeItem(SAVE_KEY);
   localStorage.removeItem(RETURN_ZONE_KEY);
-  localStorage.removeItem(LAST_ZONE_KEY);
   loadProgress();
   setZone('outside');
   renderMyScorePanel();
@@ -1391,6 +1448,7 @@ function bindInput() {
   el.openNotebook.addEventListener('click', openNotebookModal);
   el.closeNotebook.addEventListener('click', closeNotebookModal);
   el.openBadges.addEventListener('click', openBadgeModal);
+  el.openHelp.addEventListener('click', openHelp);
   el.closeBadge.addEventListener('click', closeBadgeModal);
   el.badgeModal.addEventListener('click', event => {
     if (event.target === el.badgeModal) closeBadgeModal();
@@ -1417,8 +1475,10 @@ function bindInput() {
     localStorage.removeItem(SAVE_KEY);
     localStorage.removeItem(RANK_KEY);
     localStorage.removeItem(TUTORIAL_KEY);
+    localStorage.removeItem(RETURN_ZONE_KEY);
     if (window.ElabBadges) window.ElabBadges.reset();
     loadProgress();
+    setZone('outside');
     renderHotspots();
     renderProgress();
     renderRanks();
@@ -1446,9 +1506,7 @@ function init() {
 
   const params = new URLSearchParams(window.location.search);
   const fromMission = params.get('back');
-  const savedZone = fromMission
-    ? localStorage.getItem(RETURN_ZONE_KEY)
-    : localStorage.getItem(LAST_ZONE_KEY);
+  const savedZone = fromMission ? localStorage.getItem(RETURN_ZONE_KEY) : null;
 
   if (fromMission) {
     window.history.replaceState({}, '', window.location.pathname);
