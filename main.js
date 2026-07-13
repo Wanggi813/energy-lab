@@ -1061,7 +1061,10 @@ function renderHotspots() {
       const locked = ZONES[spot.target].requires.some(id => getMissionRecord(id).status !== 'clear');
       if (locked) button.classList.add('is-locked');
     }
-    button.addEventListener('click', () => activateSpot(spot));
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      showStoryBubble('포털은 가까이 다가간 뒤 SPACE로 입장할 수 있습니다.');
+    });
     el.hotspotLayer.appendChild(button);
   }
 }
