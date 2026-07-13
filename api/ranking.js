@@ -1,6 +1,9 @@
 // Vercel 서버리스 함수 — GitHub ranking.json 읽기/쓰기 (CommonJS)
 
 const GITHUB_API = 'https://api.github.com';
+const MAX_TOTAL_SCORE = 4000;
+const MAX_MISSION_SCORE = 1000;
+const MISSION_COUNT = 4;
 
 function getConfig() {
   return {
@@ -17,6 +20,42 @@ function ghHeaders(token) {
     Accept:         'application/vnd.github.v3+json',
     'Content-Type': 'application/json',
     'User-Agent':   'physical-energy-lab',
+  };
+}
+
+function clampScore(value, max) {
+  const score = Math.round(Number(value));
+  if (!Number.isFinite(score)) return 0;
+  return Math.max(0, Math.min(max, score));
+}
+
+function sanitizeName(value) {
+  return String(value || '코치')
+    .replace(/[\u0000-\u001F\u007F<>]/g, '')
+    .trim()
+    .slice(0, 12) || '코치';
+}
+
+function sanitizeSavedAt(value) {
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString();
+}
+
+function sanitizeRankEntry(body) {
+  if (!body || typeof body !== 'object') return null;
+
+  const missions = Array.isArray(body.missions)
+    ? Array.from({ length: MISSION_COUNT }, (_, index) => clampScore(body.missions[index], MAX_MISSION_SCORE))
+    : Array(MISSION_COUNT).fill(0);
+  const missionTotal = missions.reduce((sum, score) => sum + score, 0);
+  const reportedScore = clampScore(body.score, MAX_TOTAL_SCORE);
+  const score = Math.min(reportedScore, missionTotal);
+
+  return {
+    name: sanitizeName(body.name),
+    score,
+    missions,
+    savedAt: sanitizeSavedAt(body.savedAt),
   };
 }
 
@@ -78,15 +117,16 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      if (!body || typeof body.name !== 'string' || typeof body.score !== 'number') {
+      const entry = sanitizeRankEntry(body);
+      if (!entry) {
         return res.status(400).json({ error: 'Invalid entry', received: body });
       }
 
       const { data, sha } = await getFile(cfg);
-      data.push(body);
+      data.push(entry);
       data.sort((a, b) => b.score - a.score);
       const trimmed = data.slice(0, 200);
-      await putFile(cfg, trimmed, sha, `ranking: ${body.name} (${body.score}pt)`);
+      await putFile(cfg, trimmed, sha, `ranking: ${entry.name} (${entry.score}pt)`);
       return res.json({ ok: true, total: trimmed.length });
     }
 
