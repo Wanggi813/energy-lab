@@ -376,13 +376,13 @@ function getStoryLine(zoneId) {
   return fn ? fn(cleared) : '';
 }
 
-function showStoryBubble(text) {
+function showStoryBubble(text, duration = 12000) {
   if (state.tutorialStep >= 0) return;
   clearTimeout(state.storyTimeout);
   el.storyBubbleText.textContent = text;
   el.storyBubbleClose.textContent = '확인 ▸';
   el.storyBubble.classList.remove('hidden');
-  state.storyTimeout = setTimeout(() => el.storyBubble.classList.add('hidden'), 12000);
+  state.storyTimeout = setTimeout(() => el.storyBubble.classList.add('hidden'), duration);
 }
 
 function showLockedMessage(text) {
@@ -1192,7 +1192,7 @@ function maybeShowNotebookReminder() {
   if (now < state.nextNotebookReminderAt) return;
 
   const line = NOTEBOOK_REMINDER_LINES[Math.floor(Math.random() * NOTEBOOK_REMINDER_LINES.length)];
-  showStoryBubble(line);
+  showStoryBubble(line, 6000);
   scheduleNextNotebookReminder(now);
 }
 
