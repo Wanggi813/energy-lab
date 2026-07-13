@@ -1,7 +1,7 @@
 // Vercel 서버리스 함수 — GitHub ranking.json 읽기/쓰기 (CommonJS)
 
 const GITHUB_API = 'https://api.github.com';
-const MAX_TOTAL_SCORE = 4000;
+const MAX_TOTAL_SCORE = 3999;
 const MAX_MISSION_SCORE = 1000;
 const MISSION_COUNT = 4;
 

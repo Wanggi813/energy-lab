@@ -593,7 +593,7 @@ function downloadCertificate() {
 
   ctx.fillStyle = 'rgba(168,189,208,0.6)';
   ctx.font = `12px Courier New`;
-  ctx.fillText('/ 4,000 pt', W / 2 + 40, 540);
+  ctx.fillText('/ 3,999 pt', W / 2 + 40, 540);
 
   // 날짜
   ctx.fillStyle = 'rgba(168,189,208,0.45)';
@@ -635,7 +635,8 @@ function setTestMode(active) {
 
 function applyTestMissionState() {
   for (const mission of MISSIONS) {
-    state.missionState.set(mission.id, { status: 'clear', score: 1000 });
+    const score = mission.id === 3 ? 999 : 1000;
+    state.missionState.set(mission.id, { status: 'clear', score });
   }
 }
 
@@ -1088,8 +1089,8 @@ function statusLine(spot) {
 function renderProgress() {
   const total = getTotalScore();
   el.totalScore.textContent = isTestMode()
-    ? `평가용 · ${total.toLocaleString('ko-KR')} / 4,000 pt`
-    : `${total.toLocaleString('ko-KR')} / 4,000 pt`;
+    ? `평가용 · ${total.toLocaleString('ko-KR')} / 3,999 pt`
+    : `${total.toLocaleString('ko-KR')} / 3,999 pt`;
   el.missionProgress.innerHTML = MISSIONS.map(mission => {
     const record = getMissionRecord(mission.id);
     const done = record.status === 'clear';
@@ -1423,7 +1424,7 @@ function renderMyScorePanel() {
   const g = getGrade(total);
   document.getElementById('myGradeBadge').textContent = g.label;
   document.getElementById('myGradeBadge').style.cssText = `color:${g.color};background:${g.bg};border-color:${g.color}55`;
-  document.getElementById('myTotalScore').textContent = `${total.toLocaleString('ko-KR')} / 4,000 pt`;
+  document.getElementById('myTotalScore').textContent = `${total.toLocaleString('ko-KR')} / 3,999 pt`;
   document.getElementById('myMissionBars').innerHTML = missionBarsHTML(null);
 }
 
