@@ -80,14 +80,6 @@ html.is-returning #intro-screen { display: none !important; }
   text-shadow: 0 0 24px rgba(79, 195, 255, 0.6);
 }
 
-.loading-sub {
-  font-size: 0.82rem;
-  letter-spacing: 0.2em;
-  color: rgba(168, 189, 208, 0.7);
-  text-transform: uppercase;
-  margin-top: -6px;
-}
-
 .loading-bar-wrap {
   width: 100%;
   height: 4px;
@@ -154,14 +146,6 @@ html.is-returning #intro-screen { display: none !important; }
     0 0 60px rgba(79, 195, 255, 0.35),
     0 2px 8px rgba(0, 0, 0, 0.8);
   animation: title-glow 3s ease-in-out infinite;
-}
-
-.intro-title-sub {
-  font-size: clamp(0.85rem, 1.6vw, 1.1rem);
-  font-weight: 400;
-  letter-spacing: 0.28em;
-  color: rgba(200, 230, 255, 0.7);
-  text-transform: uppercase;
 }
 
 #intro-subject {
@@ -933,16 +917,6 @@ kbd {
   border: 1px dashed rgba(238,246,220,.25);
   background: rgba(255,255,255,.045);
 }
-
-.new-best-toast {
-  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
-  background: rgba(243,196,81,.15); border: 1px solid rgba(243,196,81,.5);
-  color: #f3c451; font-size: .85rem; font-weight: 800;
-  padding: 8px 22px; border-radius: 999px;
-  animation: toastIn .35s ease both, toastOut .35s 1.6s ease forwards;
-}
-@keyframes toastIn  { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
-@keyframes toastOut { to{opacity:0} }
 
 @media (max-width: 900px) {
   .top-hud {
@@ -1757,7 +1731,7 @@ kbd {
 .nb-flip-card {
   cursor: pointer;
   perspective: 1200px;
-  height: 375px;
+  height: 455px;
   border-radius: 14px;
   transform: translateY(0);
   transition: transform 0.22s ease;
@@ -1817,7 +1791,7 @@ kbd {
 }
 .nb-flip-back {
   transform: rotateY(180deg);
-  overflow-y: hidden;
+  overflow-y: auto;
 }
 
 /* 앞면 — 흰 종이 + 상단 컬러 탭 */
@@ -1973,7 +1947,7 @@ kbd {
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 18px;
-  height: 96px;
+  max-height: 92px;
   overflow: hidden;
   align-content: flex-start;
 }
@@ -2020,6 +1994,162 @@ kbd {
   padding-left: 10px;
   border-left: 3px solid color-mix(in srgb, var(--c) 38%, #d0c0a0);
 }
+.nb-ai-box {
+  margin-top: 2px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--c) 28%, #d4c4a8);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--c) 8%, #fffaf0);
+  flex-shrink: 0;
+}
+.nb-ai-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.nb-ai-kicker {
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: color-mix(in srgb, var(--c) 65%, #1a0e04);
+}
+.nb-ai-meta {
+  flex-shrink: 0;
+  font-size: 0.66rem;
+  color: #6f5b46;
+  font-family: 'Courier New', monospace;
+}
+.nb-ai-btn {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid color-mix(in srgb, var(--c) 48%, #c8bcaa);
+  border-radius: 8px;
+  color: #1a0e04;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 22%, #fff), #f7eddc);
+  font-size: 0.74rem;
+  font-weight: 900;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.nb-ai-btn:hover {
+  filter: brightness(1.03);
+}
+.nb-ai-btn:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+.nb-ai-response {
+  margin-top: 9px;
+  max-height: 178px;
+  overflow-y: auto;
+  padding: 8px 9px;
+  border: 1px solid color-mix(in srgb, var(--c) 24%, #d0c0a0);
+  border-left: 3px solid color-mix(in srgb, var(--c) 44%, #d0c0a0);
+  border-radius: 7px;
+  background: rgba(255, 252, 245, 0.72);
+  color: #1a0e04;
+  font-size: 0.74rem;
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.nb-ai-response:empty {
+  display: none;
+}
+.nb-ai-response.is-loading {
+  color: #6f5b46;
+}
+.nb-ai-error,
+.nb-ai-question,
+.nb-ai-hint,
+.nb-ai-feedback {
+  margin: 0;
+}
+.nb-ai-question {
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+.nb-ai-choices {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+.nb-ai-choice {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 1px solid #d8c8b0;
+  border-radius: 8px;
+  color: #201306;
+  background: rgba(255, 255, 255, 0.58);
+  text-align: left;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.nb-ai-choice span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #fff;
+  background: color-mix(in srgb, var(--c) 62%, #3a2a18);
+  font-size: 0.68rem;
+  font-weight: 900;
+  font-family: 'Courier New', monospace;
+}
+.nb-ai-choice strong {
+  min-width: 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  font-weight: 700;
+}
+.nb-ai-choice:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--c) 56%, #c8bcaa);
+  background: color-mix(in srgb, var(--c) 10%, #fff);
+}
+.nb-ai-choice:disabled {
+  cursor: default;
+}
+.nb-ai-choice.is-correct {
+  border-color: #3ca66b;
+  background: rgba(72, 190, 120, 0.14);
+}
+.nb-ai-choice.is-wrong {
+  border-color: #d78b5f;
+  background: rgba(220, 138, 82, 0.14);
+}
+.nb-ai-hint {
+  margin-top: 7px;
+  color: #6a523a;
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+.nb-ai-feedback {
+  margin-top: 7px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  font-size: 0.71rem;
+  line-height: 1.45;
+}
+.nb-ai-feedback:empty {
+  display: none;
+}
+.nb-ai-feedback.is-correct {
+  color: #174629;
+  background: rgba(72, 190, 120, 0.18);
+}
+.nb-ai-feedback.is-wrong {
+  color: #5a2c14;
+  background: rgba(220, 138, 82, 0.16);
+}
 .nb-locked-label { font-size: 0.72rem; color: #4a3828; }
 
 /* 노트 하단 인증서 버튼 */
@@ -2048,6 +2178,7 @@ kbd {
 
 @media (max-width: 560px) {
   .notebook-cards { grid-template-columns: 1fr; }
+  .nb-flip-card { height: 470px; }
 }
 
 /* ── 배지 노트북 ── */

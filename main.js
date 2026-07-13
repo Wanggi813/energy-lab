@@ -719,8 +719,61 @@ function getConceptByMissionId(missionId) {
   return CONCEPTS.find(c => c.missionId === missionId);
 }
 
-function renderNotebookAiText(text) {
-  return escapeHtml(text).replace(/\n{3,}/g, '\n\n').replace(/\n/g, '<br>');
+function renderNotebookAiQuiz(quiz) {
+  const choices = Array.isArray(quiz?.choices) ? quiz.choices.slice(0, 3) : [];
+  if (!quiz?.question || choices.length !== 3) {
+    return '<p class="nb-ai-error">퀴즈 형식이 올바르지 않습니다. 다시 시도해주세요.</p>';
+  }
+  const answerIndex = Number.isInteger(quiz.answerIndex) ? quiz.answerIndex : -1;
+  const labels = ['A', 'B', 'C'];
+  const choicesHtml = choices.map((choice, index) => `
+    <button
+      class="nb-ai-choice"
+      type="button"
+      data-correct="${index === answerIndex ? '1' : '0'}"
+      data-choice-label="${labels[index]}"
+      data-explanation="${escapeHtml(quiz.explanation || '')}"
+    >
+      <span>${labels[index]}</span>
+      <strong>${escapeHtml(choice)}</strong>
+    </button>
+  `).join('');
+
+  return `
+    <div class="nb-ai-quiz" data-answered="0">
+      <p class="nb-ai-question">${escapeHtml(quiz.question)}</p>
+      <div class="nb-ai-choices">${choicesHtml}</div>
+      ${quiz.hint ? `<p class="nb-ai-hint">힌트: ${escapeHtml(quiz.hint)}</p>` : ''}
+      <p class="nb-ai-feedback" aria-live="polite"></p>
+    </div>
+  `;
+}
+
+function handleNotebookAiChoice(button) {
+  const quiz = button.closest('.nb-ai-quiz');
+  if (!quiz || quiz.dataset.answered === '1') return;
+
+  quiz.dataset.answered = '1';
+  const choices = Array.from(quiz.querySelectorAll('.nb-ai-choice'));
+  const feedback = quiz.querySelector('.nb-ai-feedback');
+  const correctButton = choices.find(choice => choice.dataset.correct === '1');
+  const isCorrect = button.dataset.correct === '1';
+  const explanation = button.dataset.explanation || correctButton?.dataset.explanation || '';
+  const correctLabel = correctButton?.dataset.choiceLabel || '';
+
+  choices.forEach(choice => {
+    choice.disabled = true;
+    if (choice.dataset.correct === '1') choice.classList.add('is-correct');
+  });
+  button.classList.add('is-selected');
+  if (!isCorrect) button.classList.add('is-wrong');
+
+  if (feedback) {
+    feedback.className = `nb-ai-feedback ${isCorrect ? 'is-correct' : 'is-wrong'}`;
+    feedback.textContent = isCorrect
+      ? `정답입니다. ${explanation}`
+      : `다시 볼 포인트가 있어요. 정답은 ${correctLabel}입니다. ${explanation}`;
+  }
 }
 
 async function requestNotebookAiQuestion(button) {
@@ -762,7 +815,7 @@ async function requestNotebookAiQuestion(button) {
 
     if (response) {
       response.classList.remove('is-loading');
-      response.innerHTML = renderNotebookAiText(data.question || data.text || '질문을 만들었지만 내용이 비어 있습니다.');
+      response.innerHTML = renderNotebookAiQuiz(data.quiz);
     }
     if (meta) meta.textContent = `${nextDifficulty.label} · ${nextCount}회`;
     button.textContent = '다른 AI 질문 받기';
@@ -1583,6 +1636,12 @@ function bindInput() {
   });
   document.getElementById('downloadCert').addEventListener('click', downloadCertificate);
   el.notebookCards.addEventListener('click', e => {
+    const choiceButton = e.target.closest('.nb-ai-choice');
+    if (choiceButton) {
+      e.stopPropagation();
+      handleNotebookAiChoice(choiceButton);
+      return;
+    }
     const aiButton = e.target.closest('.nb-ai-btn');
     if (aiButton) {
       e.stopPropagation();

@@ -104,6 +104,41 @@ function extractGeminiText(data) {
   return '';
 }
 
+function parseJsonFromText(text) {
+  const cleaned = String(text || '')
+    .replace(/^```(?:json)?/i, '')
+    .replace(/```$/i, '')
+    .trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch (_) {
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start >= 0 && end > start) {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    }
+    throw new Error('Invalid quiz JSON');
+  }
+}
+
+function normalizeQuiz(raw, difficulty) {
+  const choices = Array.isArray(raw?.choices)
+    ? raw.choices.map(choice => cleanText(choice, 90)).filter(Boolean).slice(0, 3)
+    : [];
+  const answerIndex = Number(raw?.answerIndex);
+  if (!cleanText(raw?.question, 160) || choices.length !== 3 || !Number.isInteger(answerIndex) || answerIndex < 0 || answerIndex > 2) {
+    throw new Error('Invalid quiz payload');
+  }
+  return {
+    difficulty: cleanText(raw.difficulty, 12) || difficulty.level,
+    question: cleanText(raw.question, 160),
+    choices,
+    answerIndex,
+    hint: cleanText(raw.hint, 120),
+    explanation: cleanText(raw.explanation, 140)
+  };
+}
+
 function getDifficulty(score, questionCount) {
   if (score >= 930 || questionCount >= 6) {
     return {
@@ -168,14 +203,13 @@ function buildPrompt({ concept, score, questionCount, difficulty }) {
   return [
     '너는 고등학교 2학년 물리학 학습 게임의 AI 코치다.',
     '목표는 학생이 게임에서 배운 에너지 개념을 스스로 설명하고 적용하게 만드는 것이다.',
-    '학생이 노트 뒷면에서 바로 풀 수 있는 짧은 한국어 문제를 정확히 1개만 만든다.',
-    '정답을 바로 말하지 않는다. 대신 풀이 방향을 떠올릴 수 있는 힌트와 자기 점검 기준을 제공한다.',
+    '학생이 노트 뒷면에서 바로 고를 수 있는 3지선다 한국어 퀴즈를 정확히 1개만 만든다.',
+    '정답은 answerIndex에만 담고, 선택지 문장 안에는 "정답" 같은 표시를 넣지 않는다.',
+    '선택지 3개는 모두 그럴듯해야 하며, 오답 2개는 흔한 오개념을 반영한다.',
     '문제는 미션의 스포츠 상황과 연결하고, 공식 암기보다 에너지 흐름을 말로 설명하게 유도한다.',
-    '응답 형식은 반드시 다음 네 줄만 사용한다.',
-    '난이도: <기초|적용|도전|심화>',
-    '문제: <문제 1개>',
-    '힌트: <정답을 직접 말하지 않는 힌트>',
-    '확인 기준: <학생 답안에 들어가야 할 핵심 2가지>',
+    '응답은 설명 문장이나 마크다운 없이 JSON 객체 하나만 출력한다.',
+    'JSON 형식:',
+    '{"difficulty":"기초|적용|도전|심화","question":"문제","choices":["선택지1","선택지2","선택지3"],"answerIndex":0,"hint":"힌트","explanation":"정답 확인 설명"}',
     '',
     `미션: ${cleanText(concept.training, 80)}`,
     `개념: ${cleanText(concept.title, 80)}`,
@@ -193,10 +227,10 @@ function buildPrompt({ concept, score, questionCount, difficulty }) {
     `질문 유형 지시: ${mode.instruction}`,
     '',
     '제약:',
-    '- 문제는 2문장 이내로 만든다.',
-    '- 힌트와 확인 기준은 각각 1문장으로 쓴다.',
+    '- question은 1문장, 90자 이내로 쓴다.',
+    '- choices의 각 선택지는 45자 이내로 쓴다.',
+    '- hint와 explanation은 각각 70자 이내로 쓴다.',
     '- 숫자를 쓰는 경우 계산이 복잡하지 않게 하고 단위를 포함한다.',
-    '- 같은 응답 안에 정답, 모범 답안, 풀이 과정을 쓰지 않는다.',
     '- 학생을 격려하되 과장된 감탄사는 쓰지 않는다.'
   ].join('\n');
 }
@@ -242,7 +276,12 @@ module.exports = async function handler(req, res) {
               { text: buildPrompt({ concept, score, questionCount, difficulty }) }
             ]
           }
-        ]
+        ],
+        generationConfig: {
+          temperature: 0.75,
+          maxOutputTokens: 420,
+          responseMimeType: 'application/json'
+        }
       })
     });
 
@@ -252,10 +291,11 @@ module.exports = async function handler(req, res) {
       throw new Error(detail);
     }
 
-    const question = extractGeminiText(data).trim();
-    if (!question) throw new Error('Gemini returned an empty response.');
+    const text = extractGeminiText(data).trim();
+    if (!text) throw new Error('Gemini returned an empty response.');
+    const quiz = normalizeQuiz(parseJsonFromText(text), difficulty);
 
-    res.status(200).json({ question });
+    res.status(200).json({ quiz });
   } catch (err) {
     console.error('[gemini]', err.message);
     res.status(500).json({
