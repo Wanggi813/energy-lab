@@ -1178,8 +1178,8 @@ function activateSpot(spot) {
   enterMission(spot);
 }
 
-function scheduleNextNotebookReminder(now = Date.now()) {
-  state.nextNotebookReminderAt = now + 7000 + Math.random() * 3000;
+function scheduleNextNotebookReminder(now = Date.now(), minDelay = 7000, randomDelay = 3000) {
+  state.nextNotebookReminderAt = now + minDelay + Math.random() * randomDelay;
 }
 
 function maybeShowNotebookReminder() {
@@ -1188,7 +1188,7 @@ function maybeShowNotebookReminder() {
   if (!el.storyBubble.classList.contains('hidden')) return;
 
   const now = Date.now();
-  if (!state.nextNotebookReminderAt) scheduleNextNotebookReminder(now + 2500);
+  if (!state.nextNotebookReminderAt) scheduleNextNotebookReminder(now, 3000, 2000);
   if (now < state.nextNotebookReminderAt) return;
 
   const line = NOTEBOOK_REMINDER_LINES[Math.floor(Math.random() * NOTEBOOK_REMINDER_LINES.length)];
