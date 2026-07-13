@@ -5,6 +5,7 @@ const RANK_KEY = 'athlete-lab-ranking-v1';
 const RETURN_ZONE_KEY = 'athlete-lab-return-zone';
 const TUTORIAL_KEY = 'elab-tutorial-v1';
 const NOTEBOOK_AI_STATS_KEY = 'elab-notebook-ai-question-count-v1';
+const TEST_NOTEBOOK_AI_STATS_KEY = 'elab-notebook-ai-question-count-test-v1';
 const NOTEBOOK_AI_API = '/api/gemini';
 const TEST_MODE_KEY = 'elab-evaluation-mode-v1';
 
@@ -614,8 +615,12 @@ function updateTestModeButton() {
 }
 
 function setTestMode(active) {
-  if (active) localStorage.setItem(TEST_MODE_KEY, '1');
-  else localStorage.removeItem(TEST_MODE_KEY);
+  if (active) {
+    localStorage.setItem(TEST_MODE_KEY, '1');
+    localStorage.removeItem(TEST_NOTEBOOK_AI_STATS_KEY);
+  } else {
+    localStorage.removeItem(TEST_MODE_KEY);
+  }
   document.documentElement.classList.toggle('is-test-mode', active);
   updateTestModeButton();
 }
@@ -635,6 +640,9 @@ function toggleTestMode() {
   if (el.rankModal && !el.rankModal.classList.contains('hidden')) {
     renderMyScorePanel();
     renderRanks();
+  }
+  if (el.notebookModal && !el.notebookModal.classList.contains('hidden')) {
+    renderNotebook();
   }
   showStoryBubble(next
     ? '평가용 모드가 켜졌습니다. 모든 미션이 완료 상태로 표시되고 랭킹 저장은 막힙니다.'
@@ -709,7 +717,7 @@ function renderNotebook() {
 
 function readNotebookAiStats() {
   try {
-    const data = JSON.parse(localStorage.getItem(NOTEBOOK_AI_STATS_KEY) || '{}');
+    const data = JSON.parse(localStorage.getItem(getNotebookAiStatsKey()) || '{}');
     return data && typeof data === 'object' ? data : {};
   } catch (_) {
     return {};
@@ -717,7 +725,11 @@ function readNotebookAiStats() {
 }
 
 function writeNotebookAiStats(stats) {
-  localStorage.setItem(NOTEBOOK_AI_STATS_KEY, JSON.stringify(stats));
+  localStorage.setItem(getNotebookAiStatsKey(), JSON.stringify(stats));
+}
+
+function getNotebookAiStatsKey() {
+  return isTestMode() ? TEST_NOTEBOOK_AI_STATS_KEY : NOTEBOOK_AI_STATS_KEY;
 }
 
 function getNotebookAiQuestionCount(missionId) {
