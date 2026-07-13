@@ -6,6 +6,7 @@ const RETURN_ZONE_KEY = 'athlete-lab-return-zone';
 const TUTORIAL_KEY = 'elab-tutorial-v1';
 const NOTEBOOK_AI_STATS_KEY = 'elab-notebook-ai-question-count-v1';
 const NOTEBOOK_AI_API = '/api/gemini';
+const TEST_MODE_KEY = 'elab-evaluation-mode-v1';
 
 const TUTORIAL_STEPS = [
   '안녕! 나는 에너지 연구소 코치야. 에너지 스포츠 챔피언십까지 딱 한 달 남았어.',
@@ -297,6 +298,7 @@ const el = {
   closeNotebook: document.getElementById('closeNotebook'),
   openBadges: document.getElementById('openBadges'),
   openHelp: document.getElementById('openHelp'),
+  toggleTestMode: document.getElementById('toggleTestMode'),
   closeBadge: document.getElementById('closeBadge'),
   badgeModal: document.getElementById('badgeModal'),
   badgeGrid: document.getElementById('badgeGrid'),
@@ -448,6 +450,7 @@ function renderBadges() {
 }
 
 function checkBadgesOnLoad() {
+  if (isTestMode()) return;
   if (!window.ElabBadges) return;
   const allCleared = MISSIONS.every(m => getMissionRecord(m.id).status === 'clear');
   if (allCleared) window.ElabBadges.unlockWithToast('all_clear');
@@ -594,6 +597,48 @@ function downloadCertificate() {
   link.download = `energy-lab-${name}-${dateStr}.png`;
   link.href = cvs.toDataURL('image/png');
   link.click();
+}
+
+function isTestMode() {
+  return localStorage.getItem(TEST_MODE_KEY) === '1';
+}
+
+function updateTestModeButton() {
+  if (!el.toggleTestMode) return;
+  const active = isTestMode();
+  el.toggleTestMode.textContent = active ? '평가 종료' : '평가용';
+  el.toggleTestMode.setAttribute('aria-pressed', active ? 'true' : 'false');
+  el.toggleTestMode.title = active
+    ? '평가용 모드를 끄고 실제 진행도로 돌아갑니다.'
+    : '모든 미션을 완료 상태로 보여주고 랭킹 저장은 막습니다.';
+}
+
+function setTestMode(active) {
+  if (active) localStorage.setItem(TEST_MODE_KEY, '1');
+  else localStorage.removeItem(TEST_MODE_KEY);
+  document.documentElement.classList.toggle('is-test-mode', active);
+  updateTestModeButton();
+}
+
+function applyTestMissionState() {
+  for (const mission of MISSIONS) {
+    state.missionState.set(mission.id, { status: 'clear', score: 1000 });
+  }
+}
+
+function toggleTestMode() {
+  const next = !isTestMode();
+  setTestMode(next);
+  loadProgress();
+  renderHotspots();
+  renderProgress();
+  if (el.rankModal && !el.rankModal.classList.contains('hidden')) {
+    renderMyScorePanel();
+    renderRanks();
+  }
+  showStoryBubble(next
+    ? '평가용 모드가 켜졌습니다. 모든 미션이 완료 상태로 표시되고 랭킹 저장은 막힙니다.'
+    : '평가용 모드가 꺼졌습니다. 실제 저장된 진행도로 돌아갑니다.');
 }
 
 
@@ -864,6 +909,11 @@ function loadProgress() {
     state.missionState.set(mission.id, { status: 'ready', score: null });
   }
 
+  if (isTestMode()) {
+    applyTestMissionState();
+    return;
+  }
+
   try {
     const saved = window.ElabProgress
       ? window.ElabProgress.readProgress()
@@ -1014,7 +1064,9 @@ function statusLine(spot) {
 
 function renderProgress() {
   const total = getTotalScore();
-  el.totalScore.textContent = `${total.toLocaleString('ko-KR')} / 4,000 pt`;
+  el.totalScore.textContent = isTestMode()
+    ? `평가용 · ${total.toLocaleString('ko-KR')} / 4,000 pt`
+    : `${total.toLocaleString('ko-KR')} / 4,000 pt`;
   el.missionProgress.innerHTML = MISSIONS.map(mission => {
     const record = getMissionRecord(mission.id);
     const done = record.status === 'clear';
@@ -1242,6 +1294,16 @@ function openRankModal() {
   renderMyScorePanel();
   el.rankModal.classList.remove('hidden');
   el.rankPostSave.classList.add('hidden');
+  if (isTestMode()) {
+    el.saveRank.disabled = true;
+    el.saveRank.textContent = '평가용 저장 불가';
+    el.rankPostSave.classList.remove('hidden');
+    el.rankPostSave.querySelector('span').textContent = '평가용 모드에서는 랭킹에 기록되지 않습니다.';
+  } else {
+    el.saveRank.disabled = false;
+    el.saveRank.textContent = '이 점수 저장';
+    el.rankPostSave.querySelector('span').textContent = '랭킹에 저장되었습니다. 기록은 남기고 새 도전을 시작할 수 있어요.';
+  }
   fetchRanks();
   requestAnimationFrame(() => {
     el.rankName.focus();
@@ -1361,6 +1423,11 @@ function renderRanks() {
 
 async function saveRank() {
   loadProgress();
+  if (isTestMode()) {
+    el.rankPostSave.classList.remove('hidden');
+    el.rankPostSave.querySelector('span').textContent = '평가용 모드에서는 랭킹에 기록되지 않습니다.';
+    return;
+  }
   const name = el.rankName.value.trim() || '코치';
   const missions = MISSIONS.map(m => getMissionRecord(m.id).score || 0);
   const total = getTotalScore();
@@ -1392,6 +1459,7 @@ async function saveRank() {
   }
 
   el.rankPostSave.classList.toggle('hidden', total <= 0);
+  el.rankPostSave.querySelector('span').textContent = '랭킹에 저장되었습니다. 기록은 남기고 새 도전을 시작할 수 있어요.';
 
   if (total > 0) {
     const badge = document.getElementById('myGradeBadge');
@@ -1449,6 +1517,7 @@ function resetRunAfterRanking() {
   const ok = window.confirm('랭킹 기록은 남기고 미션 진행도만 초기화할까요?');
   if (!ok) return;
 
+  setTestMode(false);
   localStorage.removeItem(SAVE_KEY);
   localStorage.removeItem(RETURN_ZONE_KEY);
   loadProgress();
@@ -1631,6 +1700,7 @@ function bindInput() {
   el.closeNotebook.addEventListener('click', closeNotebookModal);
   el.openBadges.addEventListener('click', openBadgeModal);
   el.openHelp.addEventListener('click', openHelp);
+  if (el.toggleTestMode) el.toggleTestMode.addEventListener('click', toggleTestMode);
   el.closeBadge.addEventListener('click', closeBadgeModal);
   el.badgeModal.addEventListener('click', event => {
     if (event.target === el.badgeModal) closeBadgeModal();
@@ -1674,6 +1744,7 @@ function bindInput() {
     localStorage.removeItem(RANK_KEY);
     localStorage.removeItem(TUTORIAL_KEY);
     localStorage.removeItem(RETURN_ZONE_KEY);
+    setTestMode(false);
     if (window.ElabBadges) window.ElabBadges.reset();
     loadProgress();
     setZone('outside');
@@ -1698,6 +1769,7 @@ function bindInput() {
 }
 
 function init() {
+  setTestMode(isTestMode());
   loadProgress();
   loadSprites();
   bindInput();

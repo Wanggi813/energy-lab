@@ -1702,6 +1702,15 @@ kbd {
 .hud-notebook-btn:hover {
   background: rgba(255,255,255,0.14);
 }
+.hud-test-btn {
+  color: #fff2b8;
+  border-color: rgba(243, 196, 81, 0.36);
+}
+.hud-test-btn[aria-pressed="true"] {
+  color: #1a1304;
+  background: linear-gradient(180deg, #ffd972, #f0b43e);
+  border-color: #ffe39a;
+}
 
 /* ── 노트 모달 — 밝은 종이 테마 ── */
 .notebook-panel {
