@@ -17,6 +17,13 @@ const TUTORIAL_STEPS = [
   '번지 타워와 선수 숙소는 이전 훈련을 마쳐야 열려. 우선 동계 훈련장부터 가보자!'
 ];
 
+const NOTEBOOK_REMINDER_LINES = [
+  '잠깐 이동하는 김에 노트도 한 번 열어보자. 방금 배운 에너지 흐름이 훨씬 또렷해질 거야.',
+  '미션을 깼다면 노트에 기록이 남아 있어. 다음 훈련 전에 한 번 복습해두면 좋아.',
+  '점수만 보는 것도 좋지만, 노트에서 왜 그런 결과가 나왔는지 확인하는 게 진짜 훈련이야.',
+  '헷갈리는 공식이 있으면 노트 뒷면의 AI 문제로 가볍게 점검해보자.'
+];
+
 const CONCEPTS = [
   {
     missionId: 1,
@@ -271,6 +278,7 @@ const state = {
   spriteDir: 1,
   spritesReady: false,
   storyTimeout: null,
+  nextNotebookReminderAt: 0,
   tutorialStep: -1,
   reflectionOpen: false,
   reflectionsSeen: new Set()
@@ -1170,6 +1178,24 @@ function activateSpot(spot) {
   enterMission(spot);
 }
 
+function scheduleNextNotebookReminder(now = Date.now()) {
+  state.nextNotebookReminderAt = now + 7000 + Math.random() * 3000;
+}
+
+function maybeShowNotebookReminder() {
+  if (!state.walking) return;
+  if (state.tutorialStep >= 0 || state.reflectionOpen || getActiveModal()) return;
+  if (!el.storyBubble.classList.contains('hidden')) return;
+
+  const now = Date.now();
+  if (!state.nextNotebookReminderAt) scheduleNextNotebookReminder(now + 2500);
+  if (now < state.nextNotebookReminderAt) return;
+
+  const line = NOTEBOOK_REMINDER_LINES[Math.floor(Math.random() * NOTEBOOK_REMINDER_LINES.length)];
+  showStoryBubble(line);
+  scheduleNextNotebookReminder(now);
+}
+
 function enterMission(spot) {
   const mission = getMission(spot.missionId);
   if (!mission) return;
@@ -1218,6 +1244,8 @@ function updateMovement() {
     state.walking = false;
     state.running = false;
   }
+
+  maybeShowNotebookReminder();
 }
 
 function loadSprites() {
