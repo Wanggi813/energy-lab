@@ -139,6 +139,49 @@ function normalizeQuiz(raw, difficulty) {
   };
 }
 
+function createFallbackQuiz(concept, difficulty, questionCount) {
+  const title = cleanText(concept.title, 40);
+  const formula = cleanText(concept.formula, 60);
+  const flow = cleanText(concept.flow, 80);
+  const templates = [
+    {
+      question: `${title}에서 가장 중요한 에너지 흐름은 무엇일까요?`,
+      choices: [
+        flow || '에너지는 형태를 바꾸며 전환된다',
+        '에너지는 운동 중 완전히 사라진다',
+        '속도가 변해도 에너지는 관련이 없다'
+      ],
+      answerIndex: 0,
+      hint: '노트의 에너지 흐름 화살표를 먼저 보세요.',
+      explanation: '에너지는 사라지지 않고 다른 형태로 전환됩니다.'
+    },
+    {
+      question: `${formula}에서 변인이 커지면 관련 에너지는 어떻게 달라질까요?`,
+      choices: [
+        '공식에 포함된 변인 관계에 따라 달라진다',
+        '항상 아무 변화가 없다',
+        '단위와 관계없이 무조건 0이 된다'
+      ],
+      answerIndex: 0,
+      hint: '공식에서 어떤 문자가 곱해지는지 살펴보세요.',
+      explanation: '공식의 변인 관계를 보면 에너지 변화를 예측할 수 있습니다.'
+    },
+    {
+      question: `${title}을 설명할 때 가장 조심해야 할 생각은 무엇일까요?`,
+      choices: [
+        '에너지가 사라진다고 말하는 것',
+        '에너지 형태가 바뀐다고 말하는 것',
+        '조건 변화가 결과를 바꾼다고 보는 것'
+      ],
+      answerIndex: 0,
+      hint: '에너지 보존 관점에서 틀린 표현을 찾으세요.',
+      explanation: '에너지는 사라지는 것이 아니라 다른 형태로 전환됩니다.'
+    }
+  ];
+  const base = templates[Math.min(questionCount, templates.length - 1)];
+  return { difficulty: difficulty.level, ...base };
+}
+
 function getDifficulty(score, questionCount) {
   if (score >= 930 || questionCount >= 6) {
     return {
@@ -262,7 +305,7 @@ module.exports = async function handler(req, res) {
   const difficulty = getDifficulty(score, questionCount);
 
   try {
-    const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+    const model = process.env.GEMINI_MODEL || 'gemini-flash-latest';
     const response = await fetch(`${GEMINI_API_BASE}/models/${model}:generateContent`, {
       method: 'POST',
       headers: {
@@ -278,9 +321,8 @@ module.exports = async function handler(req, res) {
           }
         ],
         generationConfig: {
-          temperature: 0.75,
-          maxOutputTokens: 420,
-          responseMimeType: 'application/json'
+          temperature: 0.35,
+          maxOutputTokens: 420
         }
       })
     });
@@ -293,14 +335,26 @@ module.exports = async function handler(req, res) {
 
     const text = extractGeminiText(data).trim();
     if (!text) throw new Error('Gemini returned an empty response.');
-    const quiz = normalizeQuiz(parseJsonFromText(text), difficulty);
+    let quiz;
+    try {
+      quiz = normalizeQuiz(parseJsonFromText(text), difficulty);
+    } catch (parseErr) {
+      console.warn('[gemini] quiz JSON parse failed; using fallback quiz:', parseErr.message);
+      quiz = createFallbackQuiz(concept, difficulty, questionCount);
+    }
 
     res.status(200).json({ quiz });
   } catch (err) {
     console.error('[gemini]', err.message);
-    res.status(500).json({
-      error: 'Gemini request failed',
-      message: 'AI 질문을 만드는 중 문제가 생겼습니다. 잠시 후 다시 시도해주세요.'
+    const rawMessage = String(err.message || '');
+    const isModelIssue = /model|models\/|not found|not available|deprecated/i.test(rawMessage);
+    res.status(200).json({
+      quiz: createFallbackQuiz(concept, difficulty, questionCount),
+      fallback: true,
+      error: isModelIssue ? 'Gemini model issue' : 'Gemini request failed',
+      message: isModelIssue
+        ? 'Vercel 환경변수 GEMINI_MODEL을 gemini-flash-latest로 설정하거나 GEMINI_MODEL을 삭제한 뒤 다시 배포해주세요.'
+        : 'AI 질문을 만드는 중 문제가 생겼습니다. Vercel 환경변수 GEMINI_API_KEY 설정과 배포 로그를 확인해주세요.'
     });
   }
 };
