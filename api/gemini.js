@@ -139,7 +139,7 @@ function normalizeQuiz(raw, difficulty) {
   };
 }
 
-function createFallbackQuiz(concept, difficulty, questionCount) {
+function createFallbackQuiz(concept, difficulty, questionCount, score = 0) {
   const title = cleanText(concept.title, 40);
   const formula = cleanText(concept.formula, 60);
   const flow = cleanText(concept.flow, 80);
@@ -176,9 +176,42 @@ function createFallbackQuiz(concept, difficulty, questionCount) {
       answerIndex: 0,
       hint: '에너지 보존 관점에서 틀린 표현을 찾으세요.',
       explanation: '에너지는 사라지는 것이 아니라 다른 형태로 전환됩니다.'
+    },
+    {
+      question: `${title}에서 속도가 커지는 순간 무엇이 함께 변할까요?`,
+      choices: [
+        '운동에너지의 크기가 달라진다',
+        '모든 에너지가 즉시 0이 된다',
+        '공식의 단위가 사라진다'
+      ],
+      answerIndex: 0,
+      hint: '속도와 연결된 에너지 이름을 떠올려 보세요.',
+      explanation: '속도 변화는 운동에너지 변화와 직접 관련됩니다.'
+    },
+    {
+      question: `${title} 문제를 풀 때 먼저 확인하면 좋은 것은 무엇일까요?`,
+      choices: [
+        '어떤 에너지 형태로 바뀌는지',
+        '선수 이름의 글자 수',
+        '배경 그림의 색깔'
+      ],
+      answerIndex: 0,
+      hint: '문제 장면에서 에너지 전환을 먼저 찾으세요.',
+      explanation: '에너지 형태의 전환을 파악해야 공식을 고를 수 있습니다.'
+    },
+    {
+      question: `점수 ${score}점인 현재 단계에서 더 깊게 볼 것은 무엇일까요?`,
+      choices: [
+        '조건 변화가 에너지 결과를 어떻게 바꾸는지',
+        '정답 선택지가 항상 첫 번째인지',
+        '공식 없이 느낌으로만 고르는지'
+      ],
+      answerIndex: 0,
+      hint: '높이, 속도, 거리 같은 조건 변화를 비교하세요.',
+      explanation: '조건이 바뀌면 에너지 전환의 양상도 달라집니다.'
     }
   ];
-  const base = templates[Math.min(questionCount, templates.length - 1)];
+  const base = templates[questionCount % templates.length];
   return { difficulty: difficulty.level, ...base };
 }
 
@@ -237,7 +270,7 @@ function getQuestionMode(questionCount) {
   return modes[Math.min(questionCount, modes.length - 1)];
 }
 
-function buildPrompt({ concept, score, questionCount, difficulty }) {
+function buildPrompt({ concept, score, questionCount, difficulty, quizSeed }) {
   const variables = Array.isArray(concept.variables)
     ? concept.variables.map(v => `${cleanText(v.sym, 20)}: ${cleanText(v.desc, 80)}`).join(', ')
     : '';
@@ -263,6 +296,7 @@ function buildPrompt({ concept, score, questionCount, difficulty }) {
     `개념 설명: ${cleanText(concept.desc, 260)}`,
     `학생 점수: ${score}/1000`,
     `이 개념에서 이전에 받은 AI 질문 횟수: ${questionCount}`,
+    `이번 퀴즈 고유 번호: ${quizSeed}`,
     `요청 난이도: ${difficulty.level}`,
     `학습 목표: ${difficulty.target}`,
     `난이도 조절 지시: ${difficulty.instruction}`,
@@ -302,6 +336,7 @@ module.exports = async function handler(req, res) {
   }
   const score = clampNumber(body.score, 0, 1000);
   const questionCount = clampNumber(body.questionCount, 0, 99);
+  const quizSeed = clampNumber(body.quizSeed, 0, 999999);
   const difficulty = getDifficulty(score, questionCount);
 
   try {
@@ -316,7 +351,7 @@ module.exports = async function handler(req, res) {
         contents: [
           {
             parts: [
-              { text: buildPrompt({ concept, score, questionCount, difficulty }) }
+              { text: buildPrompt({ concept, score, questionCount, difficulty, quizSeed }) }
             ]
           }
         ],
@@ -340,7 +375,7 @@ module.exports = async function handler(req, res) {
       quiz = normalizeQuiz(parseJsonFromText(text), difficulty);
     } catch (parseErr) {
       console.warn('[gemini] quiz JSON parse failed; using fallback quiz:', parseErr.message);
-      quiz = createFallbackQuiz(concept, difficulty, questionCount);
+      quiz = createFallbackQuiz(concept, difficulty, questionCount, score);
     }
 
     res.status(200).json({ quiz });
@@ -349,7 +384,7 @@ module.exports = async function handler(req, res) {
     const rawMessage = String(err.message || '');
     const isModelIssue = /model|models\/|not found|not available|deprecated/i.test(rawMessage);
     res.status(200).json({
-      quiz: createFallbackQuiz(concept, difficulty, questionCount),
+      quiz: createFallbackQuiz(concept, difficulty, questionCount, score),
       fallback: true,
       error: isModelIssue ? 'Gemini model issue' : 'Gemini request failed',
       message: isModelIssue

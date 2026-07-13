@@ -2000,6 +2000,7 @@ kbd {
   border: 1px solid color-mix(in srgb, var(--c) 28%, #d4c4a8);
   border-radius: 8px;
   background: color-mix(in srgb, var(--c) 8%, #fffaf0);
+  color: #1a0e04;
   flex-shrink: 0;
 }
 .nb-ai-head {
@@ -2012,12 +2013,12 @@ kbd {
 .nb-ai-kicker {
   font-size: 0.7rem;
   font-weight: 900;
-  color: color-mix(in srgb, var(--c) 65%, #1a0e04);
+  color: #263d3f;
 }
 .nb-ai-meta {
   flex-shrink: 0;
   font-size: 0.66rem;
-  color: #6f5b46;
+  color: #5a4632;
   font-family: 'Courier New', monospace;
 }
 .nb-ai-btn {
@@ -2054,6 +2055,9 @@ kbd {
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
+.nb-ai-response * {
+  color: inherit;
+}
 .nb-ai-response:empty {
   display: none;
 }
@@ -2067,6 +2071,7 @@ kbd {
   margin: 0;
 }
 .nb-ai-question {
+  color: #1a0e04;
   font-size: 0.78rem;
   font-weight: 800;
   line-height: 1.45;
@@ -2107,6 +2112,7 @@ kbd {
 }
 .nb-ai-choice strong {
   min-width: 0;
+  color: #201306;
   font-size: 0.72rem;
   line-height: 1.35;
   font-weight: 700;

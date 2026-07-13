@@ -803,7 +803,8 @@ async function requestNotebookAiQuestion(button) {
       body: JSON.stringify({
         missionId,
         score,
-        questionCount
+        questionCount,
+        quizSeed: Date.now() % 1000000
       })
     });
     const data = await res.json().catch(() => ({}));
