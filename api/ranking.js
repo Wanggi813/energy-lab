@@ -1,13 +1,13 @@
-// Vercel 서버리스 함수 — GitHub ranking.json 읽기/쓰기
+// Vercel 서버리스 함수 — GitHub ranking.json 읽기/쓰기 (CommonJS)
 
 const GITHUB_API = 'https://api.github.com';
 
 function getConfig() {
   return {
     token:  process.env.GITHUB_TOKEN,
-    repo:   process.env.GITHUB_REPO,   // e.g. "username/muligo2"
+    repo:   process.env.GITHUB_REPO,
     branch: process.env.GITHUB_BRANCH || 'main',
-    file:   process.env.RANKING_FILE   || 'ranking.json',
+    file:   process.env.RANKING_FILE  || 'ranking.json',
   };
 }
 
@@ -24,9 +24,13 @@ async function getFile(cfg) {
   const url = `${GITHUB_API}/repos/${cfg.repo}/contents/${cfg.file}?ref=${cfg.branch}`;
   const r = await fetch(url, { headers: ghHeaders(cfg.token) });
   if (r.status === 404) return { data: [], sha: null };
-  if (!r.ok) throw new Error(`GitHub GET failed: ${r.status}`);
+  if (!r.ok) {
+    const text = await r.text();
+    throw new Error(`GitHub GET ${r.status}: ${text}`);
+  }
   const json = await r.json();
-  const data = JSON.parse(Buffer.from(json.content, 'base64').toString('utf-8'));
+  const content = json.content.replace(/\n/g, '');
+  const data = JSON.parse(Buffer.from(content, 'base64').toString('utf-8'));
   return { data, sha: json.sha };
 }
 
@@ -40,10 +44,13 @@ async function putFile(cfg, data, sha, message) {
     headers: ghHeaders(cfg.token),
     body:    JSON.stringify(body),
   });
-  if (!r.ok) throw new Error(`GitHub PUT failed: ${r.status}`);
+  if (!r.ok) {
+    const text = await r.text();
+    throw new Error(`GitHub PUT ${r.status}: ${text}`);
+  }
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -52,7 +59,16 @@ export default async function handler(req, res) {
 
   const cfg = getConfig();
   if (!cfg.token || !cfg.repo) {
-    return res.status(500).json({ error: 'Server not configured (missing env vars)' });
+    return res.status(500).json({
+      error: 'env vars missing',
+      hint: 'GITHUB_TOKEN and GITHUB_REPO must be set in Vercel environment variables',
+    });
+  }
+
+  // body 파싱 (Vercel은 자동 파싱하지만 안전하게 처리)
+  let body = req.body;
+  if (req.method === 'POST' && typeof body === 'string') {
+    try { body = JSON.parse(body); } catch (_) { body = {}; }
   }
 
   try {
@@ -62,23 +78,21 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const entry = req.body;
-      if (!entry || typeof entry.name !== 'string' || typeof entry.score !== 'number') {
-        return res.status(400).json({ error: 'Invalid entry' });
+      if (!body || typeof body.name !== 'string' || typeof body.score !== 'number') {
+        return res.status(400).json({ error: 'Invalid entry', received: body });
       }
 
-      // 읽기 → 추가 → 정렬 → 상위 200개 유지 → 쓰기
       const { data, sha } = await getFile(cfg);
-      data.push(entry);
+      data.push(body);
       data.sort((a, b) => b.score - a.score);
       const trimmed = data.slice(0, 200);
-      await putFile(cfg, trimmed, sha, `ranking: ${entry.name} (${entry.score}pt)`);
-      return res.json({ ok: true });
+      await putFile(cfg, trimmed, sha, `ranking: ${body.name} (${body.score}pt)`);
+      return res.json({ ok: true, total: trimmed.length });
     }
 
     res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
-    console.error(err);
+    console.error('[ranking]', err.message);
     res.status(500).json({ error: err.message });
   }
-}
+};

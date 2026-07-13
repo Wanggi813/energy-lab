@@ -4,6 +4,8 @@ const SAVE_KEY = 'elab-progress-v2';
 const RANK_KEY = 'athlete-lab-ranking-v1';
 const RETURN_ZONE_KEY = 'athlete-lab-return-zone';
 const TUTORIAL_KEY = 'elab-tutorial-v1';
+const NOTEBOOK_AI_STATS_KEY = 'elab-notebook-ai-question-count-v1';
+const NOTEBOOK_AI_API = '/api/gemini';
 
 const TUTORIAL_STEPS = [
   '안녕! 나는 에너지 연구소 코치야. 에너지 스포츠 챔피언십까지 딱 한 달 남았어.',
@@ -609,6 +611,8 @@ function renderNotebook() {
     }
 
     const mScore = rec.score || 0;
+    const aiCount = getNotebookAiQuestionCount(c.missionId);
+    const aiDifficulty = getNotebookAiDifficulty(mScore, aiCount);
     const tagsHtml = (c.variables || []).map(v =>
       `<span class="nb-tag"><em>${escapeHtml(v.sym)}</em><span class="nb-tag-desc">${escapeHtml(v.desc)}</span></span>`
     ).join('');
@@ -642,12 +646,136 @@ function renderNotebook() {
             ${tagsHtml ? `<div class="nb-tag-grid">${tagsHtml}</div>` : ''}
             ${c.flow ? `<div class="nb-flow">${escapeHtml(c.flow)}</div>` : ''}
             <p class="nb-desc">${escapeHtml(c.desc)}</p>
+            <div class="nb-ai-box" data-ai-box="${c.missionId}">
+              <div class="nb-ai-head">
+                <span class="nb-ai-kicker">AI 문제 풀어보기</span>
+                <span class="nb-ai-meta">${escapeHtml(aiDifficulty.label)} · ${aiCount}회</span>
+              </div>
+              <button class="nb-ai-btn" type="button" data-mission="${c.missionId}">AI 질문 받기</button>
+              <div class="nb-ai-response" aria-live="polite"></div>
+            </div>
             <span class="nb-flip-hint">↻ 돌아가기</span>
           </div>
 
         </div>
       </div>`;
   }).join('');
+}
+
+function readNotebookAiStats() {
+  try {
+    const data = JSON.parse(localStorage.getItem(NOTEBOOK_AI_STATS_KEY) || '{}');
+    return data && typeof data === 'object' ? data : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function writeNotebookAiStats(stats) {
+  localStorage.setItem(NOTEBOOK_AI_STATS_KEY, JSON.stringify(stats));
+}
+
+function getNotebookAiQuestionCount(missionId) {
+  const stats = readNotebookAiStats();
+  return Math.max(0, Number(stats[String(missionId)] || 0));
+}
+
+function setNotebookAiQuestionCount(missionId, count) {
+  const stats = readNotebookAiStats();
+  stats[String(missionId)] = Math.max(0, Number(count) || 0);
+  writeNotebookAiStats(stats);
+}
+
+function getNotebookAiDifficulty(score, count) {
+  if (score >= 930 || count >= 6) {
+    return {
+      level: 'advanced',
+      label: '심화',
+      instruction: '새로운 스포츠 상황에 개념을 전이하고, 조건 변화가 에너지 흐름에 미치는 영향을 판단하게 해줘.'
+    };
+  }
+  if (score >= 800 || count >= 4) {
+    return {
+      level: 'challenge',
+      label: '도전',
+      instruction: '짧은 계산과 이유 설명을 함께 요구하고, 흔한 오개념을 스스로 점검하게 해줘.'
+    };
+  }
+  if (score >= 600 || count >= 2) {
+    return {
+      level: 'intermediate',
+      label: '적용',
+      instruction: '공식의 변인 관계를 실제 미션 장면에 적용하고, 한 가지 조건이 바뀌면 결과가 어떻게 달라지는지 묻게 해줘.'
+    };
+  }
+  return {
+    level: 'basic',
+    label: '기초',
+    instruction: '처음 복습하는 학생도 풀 수 있게 핵심 개념 확인 중심으로 물어봐줘.'
+  };
+}
+
+function getConceptByMissionId(missionId) {
+  return CONCEPTS.find(c => c.missionId === missionId);
+}
+
+function renderNotebookAiText(text) {
+  return escapeHtml(text).replace(/\n{3,}/g, '\n\n').replace(/\n/g, '<br>');
+}
+
+async function requestNotebookAiQuestion(button) {
+  const missionId = Number(button.dataset.mission);
+  const concept = getConceptByMissionId(missionId);
+  if (!concept) return;
+
+  const card = button.closest('.nb-flip-card');
+  const box = button.closest('.nb-ai-box');
+  const response = box ? box.querySelector('.nb-ai-response') : null;
+  const meta = box ? box.querySelector('.nb-ai-meta') : null;
+  const record = getMissionRecord(missionId);
+  const score = record.score || 0;
+  const questionCount = getNotebookAiQuestionCount(missionId);
+
+  button.disabled = true;
+  button.textContent = '질문 만드는 중...';
+  if (response) {
+    response.classList.add('is-loading');
+    response.innerHTML = 'AI 코치가 점수와 복습 횟수에 맞춰 문제를 고르는 중입니다.';
+  }
+
+  try {
+    const res = await fetch(NOTEBOOK_AI_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        missionId,
+        score,
+        questionCount
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || data.error || 'AI 질문을 가져오지 못했습니다.');
+
+    const nextCount = questionCount + 1;
+    const nextDifficulty = getNotebookAiDifficulty(score, nextCount);
+    setNotebookAiQuestionCount(missionId, nextCount);
+
+    if (response) {
+      response.classList.remove('is-loading');
+      response.innerHTML = renderNotebookAiText(data.question || data.text || '질문을 만들었지만 내용이 비어 있습니다.');
+    }
+    if (meta) meta.textContent = `${nextDifficulty.label} · ${nextCount}회`;
+    button.textContent = '다른 AI 질문 받기';
+    if (card) card.classList.add('has-ai-question');
+  } catch (err) {
+    if (response) {
+      response.classList.remove('is-loading');
+      response.innerHTML = escapeHtml(err.message || 'AI 질문을 불러오는 중 문제가 생겼습니다.');
+    }
+    button.textContent = '다시 시도';
+  } finally {
+    button.disabled = false;
+  }
 }
 
 function initTutorial() {
@@ -1455,6 +1583,16 @@ function bindInput() {
   });
   document.getElementById('downloadCert').addEventListener('click', downloadCertificate);
   el.notebookCards.addEventListener('click', e => {
+    const aiButton = e.target.closest('.nb-ai-btn');
+    if (aiButton) {
+      e.stopPropagation();
+      requestNotebookAiQuestion(aiButton);
+      return;
+    }
+    if (e.target.closest('.nb-ai-box')) {
+      e.stopPropagation();
+      return;
+    }
     const card = e.target.closest('.nb-flip-card[data-mission]');
     if (card) card.classList.toggle('is-flipped');
   });
