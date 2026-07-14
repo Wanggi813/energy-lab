@@ -46,7 +46,6 @@ function initThree() {
   createThreePipe();
   createThreeRider();
   createThreeLandingGuide();
-  createThreeTrail();
   createThreeSnow();
 
   T3.ready = true;
@@ -509,18 +508,6 @@ function createThreeRider() {
   T3.scene.add(root);
 }
 
-function createThreeTrail() {
-  const three = window.THREE;
-  T3.trailPositions = new Float32Array(90 * 3);
-  const geom = new three.BufferGeometry();
-  geom.setAttribute('position', new three.BufferAttribute(T3.trailPositions, 3));
-  T3.trail = new three.Line(
-    geom,
-    new three.LineBasicMaterial({ color: 0x78d9ff, transparent: true, opacity: 0.65 })
-  );
-  T3.scene.add(T3.trail);
-}
-
 function createThreeLandingGuide() {
   const three = window.THREE;
   const group = new three.Group();
@@ -579,7 +566,6 @@ function drawThree() {
     }
   }
 
-  if (state.trail.length > 0) updateThreeTrail();
   updateThreeLandingGuide(x, angle);
   updateThreeScoreboard();
   if ((_snowFrame++ & 1) === 0) updateThreeSnow();
@@ -588,25 +574,6 @@ function drawThree() {
   T3.camera.position.x += (targetX - T3.camera.position.x) * 0.045;
   T3.camera.lookAt(x * 0.18, 3.4, 0);
   T3.renderer.render(T3.scene, T3.camera);
-}
-
-function updateThreeTrail() {
-  if (!T3.trail || !T3.trailPositions) return;
-  const max = 90;
-  for (let i = 0; i < max; i += 1) {
-    const src = state.trail[state.trail.length - max + i];
-    const offset = i * 3;
-    if (src) {
-      T3.trailPositions[offset] = src.x;
-      T3.trailPositions[offset + 1] = src.y + 0.16;
-      T3.trailPositions[offset + 2] = 0;
-    } else {
-      T3.trailPositions[offset] = state.px || state.x;
-      T3.trailPositions[offset + 1] = currentHeight();
-      T3.trailPositions[offset + 2] = 0;
-    }
-  }
-  T3.trail.geometry.attributes.position.needsUpdate = true;
 }
 
 function updateThreeLandingGuide(x, boardAngle) {

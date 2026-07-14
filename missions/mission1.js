@@ -79,7 +79,6 @@ const state = {
   lastDirection: 1,
   lastWall: 0,
   messageTimer: 0,
-  trail: [],
   particles: []
 };
 
@@ -153,8 +152,6 @@ const T3 = {
   landingGuide: null,
   slopeGuide: null,
   boardGuide: null,
-  trail: null,
-  trailPositions: null,
   snow: null,
   scoreboardTexture: null,
   scoreboardCtx: null,
@@ -223,7 +220,6 @@ function resetRun(startMode = 'idle') {
   state.lastDirection = 1;
   state.lastWall = 0;
   state.messageTimer = 0;
-  state.trail = [];
   state.particles = [];
   _ehIdx = 0; _ehLen = 0;
   ui.modal.classList.remove('show');
@@ -603,11 +599,6 @@ function smallestAngle(a, b) {
   let d = (a - b + Math.PI) % (Math.PI * 2) - Math.PI;
   if (d < -Math.PI) d += Math.PI * 2;
   return d;
-}
-
-function addTrail(x, y) {
-  state.trail.push({ x, y, life: 1 });
-  if (state.trail.length > 90) state.trail.shift();
 }
 
 function burst(x, y, color, count) {

@@ -123,14 +123,6 @@ function drawAuroraRibbons() {
   ctx.restore();
 }
 
-function drawSideVenueFill() {
-  const deckY = toScreen(0, PIPE_HEIGHT + 0.55).y;
-  drawSnowBerms(deckY);
-  drawPineClusters(deckY);
-  drawServiceTents(deckY);
-  drawCameraPlatforms(deckY);
-}
-
 function drawCompetitionAprons() {
   const deckY = toScreen(0, PIPE_HEIGHT + 0.55).y;
   for (const side of [-1, 1]) {
@@ -248,170 +240,6 @@ function drawRealSponsorWall(side, outerX, nearLipX, deckY) {
     ctx.textAlign = 'center';
     ctx.fillText(labels[i], 0, 3);
     ctx.restore();
-  }
-}
-
-function drawSnowBerms(deckY) {
-  for (const side of [-1, 1]) {
-    const outerX = side < 0 ? 0 : view.w;
-    const innerX = view.cx + side * view.scale * 22.2;
-    const crestY = deckY + view.scale * 2.0;
-    const bottomY = view.h + 10;
-    const berm = ctx.createLinearGradient(0, crestY, 0, bottomY);
-    berm.addColorStop(0, '#f6fbff');
-    berm.addColorStop(0.56, '#cfe4f2');
-    berm.addColorStop(1, '#9fbdd0');
-    ctx.fillStyle = berm;
-    ctx.beginPath();
-    ctx.moveTo(outerX, crestY + 24);
-    ctx.bezierCurveTo(
-      outerX + side * -view.w * 0.12,
-      crestY - 20,
-      innerX - side * view.scale * 5,
-      crestY - view.scale * 0.9,
-      innerX,
-      crestY
-    );
-    ctx.lineTo(innerX - side * view.scale * 2.4, bottomY);
-    ctx.lineTo(outerX, bottomY);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.strokeStyle = 'rgba(44,96,132,0.14)';
-    ctx.lineWidth = 1.2;
-    for (let i = 0; i < 9; i += 1) {
-      const t = i / 8;
-      const x0 = outerX + (innerX - outerX) * t;
-      const y0 = crestY + 28 + Math.sin(t * Math.PI) * 18;
-      ctx.beginPath();
-      ctx.moveTo(x0, y0);
-      ctx.bezierCurveTo(x0 - side * 30, y0 + 26, x0 - side * 44, y0 + 72, x0 - side * 55, y0 + 126);
-      ctx.stroke();
-    }
-  }
-}
-
-function drawPineClusters(deckY) {
-  for (const side of [-1, 1]) {
-    for (let i = 0; i < 18; i += 1) {
-      const r = fract(Math.sin(i * 34.17 + side * 7.3) * 9000);
-      const x = side < 0
-        ? 18 + r * Math.max(30, view.cx - view.scale * 25)
-        : view.cx + view.scale * 25 + r * Math.max(30, view.w - (view.cx + view.scale * 25) - 18);
-      const y = deckY - view.scale * (1.5 + fract(Math.sin(i * 11.2) * 6000) * 4.8);
-      const size = 20 + fract(Math.sin(i * 19.71) * 5000) * 34;
-      drawPineTree(x, y, size, i % 3 === 0);
-    }
-  }
-}
-
-function drawPineTree(x, y, size, lit) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.fillStyle = lit ? 'rgba(26,70,62,0.92)' : 'rgba(12,42,47,0.92)';
-  for (let layer = 0; layer < 3; layer += 1) {
-    const w = size * (0.55 + layer * 0.18);
-    const h = size * (0.55 + layer * 0.22);
-    const yy = layer * size * 0.25;
-    ctx.beginPath();
-    ctx.moveTo(0, yy - h);
-    ctx.lineTo(-w, yy + h * 0.25);
-    ctx.quadraticCurveTo(-w * 0.25, yy + h * 0.1, 0, yy + h * 0.28);
-    ctx.quadraticCurveTo(w * 0.25, yy + h * 0.1, w, yy + h * 0.25);
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.fillStyle = 'rgba(75,54,39,0.85)';
-  ctx.fillRect(-size * 0.08, size * 0.52, size * 0.16, size * 0.32);
-  if (lit) {
-    ctx.fillStyle = 'rgba(255,245,205,0.78)';
-    ctx.beginPath();
-    ctx.arc(size * 0.16, -size * 0.26, 1.7, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-function drawServiceTents(deckY) {
-  const tents = [
-    { side: -1, x: 0.11, y: 1.25, color: '#30d5ff', label: 'TEAM' },
-    { side: -1, x: 0.22, y: 2.45, color: '#ff5fa2', label: 'MEDIA' },
-    { side: 1, x: 0.12, y: 1.7, color: '#ffb347', label: 'RESCUE' },
-    { side: 1, x: 0.25, y: 2.9, color: '#3ee68f', label: 'CREW' }
-  ];
-
-  for (const tent of tents) {
-    const available = view.w * 0.5 - view.scale * 25;
-    const x = tent.side < 0
-      ? 26 + available * tent.x
-      : view.w - 26 - available * tent.x;
-    const y = deckY + view.scale * tent.y;
-    drawTent(x, y, tent.side, tent.color, tent.label);
-  }
-}
-
-function drawTent(x, y, side, color, label) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.fillStyle = 'rgba(8,17,30,0.28)';
-  ctx.beginPath();
-  ctx.ellipse(0, 22, 44, 9, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(-42, 8);
-  ctx.lineTo(0, -24);
-  ctx.lineTo(42, 8);
-  ctx.closePath();
-  ctx.fill();
-
-  const shade = ctx.createLinearGradient(-42, -20, 42, 14);
-  shade.addColorStop(0, 'rgba(255,255,255,0.32)');
-  shade.addColorStop(0.48, 'rgba(255,255,255,0.08)');
-  shade.addColorStop(1, 'rgba(0,0,0,0.18)');
-  ctx.fillStyle = shade;
-  ctx.beginPath();
-  ctx.moveTo(-42, 8);
-  ctx.lineTo(0, -24);
-  ctx.lineTo(42, 8);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle = 'rgba(8,17,30,0.82)';
-  ctx.fillRect(-38, 8, 76, 24);
-  ctx.fillStyle = '#f8fbff';
-  ctx.font = '900 8px Pretendard';
-  ctx.textAlign = 'center';
-  ctx.fillText(label, 0, 24);
-  ctx.restore();
-}
-
-function drawCameraPlatforms(deckY) {
-  for (const side of [-1, 1]) {
-    const x = side < 0 ? view.w * 0.08 : view.w * 0.92;
-    const y = deckY - view.scale * 3.8;
-    ctx.strokeStyle = 'rgba(200,225,240,0.48)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x - side * 18, y + 76);
-    ctx.lineTo(x, y);
-    ctx.lineTo(x + side * 18, y + 76);
-    ctx.moveTo(x - side * 10, y + 36);
-    ctx.lineTo(x + side * 10, y + 36);
-    ctx.stroke();
-
-    ctx.fillStyle = 'rgba(8,17,30,0.86)';
-    ctx.beginPath();
-    ctx.roundRect(x - 26, y - 12, 52, 20, 4);
-    ctx.fill();
-    ctx.fillStyle = 'rgba(48,213,255,0.9)';
-    ctx.beginPath();
-    ctx.arc(x + side * 18, y - 2, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x - 22, y - 8, 30, 12);
   }
 }
 
@@ -976,23 +804,6 @@ function drawBlueDyeLines() {
   const mark = toScreen(0, -0.95);
   ctx.fillText('HALFPIPE', mark.x, mark.y);
   ctx.restore();
-}
-
-function drawTrail() {
-  if (state.trail.length < 2) return;
-  ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
-  for (let i = 1; i < state.trail.length; i += 1) {
-    const a = state.trail[i - 1];
-    const b = state.trail[i];
-    const pa = toScreen(a.x, a.y + 0.08);
-    const pb = toScreen(b.x, b.y + 0.08);
-    ctx.strokeStyle = `rgba(48,213,255,${Math.max(0, b.life) * 0.42})`;
-    ctx.beginPath();
-    ctx.moveTo(pa.x, pa.y);
-    ctx.lineTo(pb.x, pb.y);
-    ctx.stroke();
-  }
 }
 
 function drawParticles() {
