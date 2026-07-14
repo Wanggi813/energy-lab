@@ -81,26 +81,10 @@ function cleanText(value, maxLength) {
 
 function extractGeminiText(data) {
   if (!data || typeof data !== 'object') return '';
-  if (typeof data.output_text === 'string') return data.output_text;
-  if (typeof data.outputText === 'string') return data.outputText;
-
-  if (Array.isArray(data.output)) {
-    return data.output.map(item => {
-      if (typeof item === 'string') return item;
-      if (typeof item?.text === 'string') return item.text;
-      if (typeof item?.content === 'string') return item.content;
-      if (Array.isArray(item?.content)) {
-        return item.content.map(part => part?.text || '').join('\n');
-      }
-      return '';
-    }).filter(Boolean).join('\n');
-  }
-
   const parts = data.candidates?.[0]?.content?.parts;
   if (Array.isArray(parts)) {
     return parts.map(part => part.text || '').filter(Boolean).join('\n');
   }
-
   return '';
 }
 
