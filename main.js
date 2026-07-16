@@ -1789,6 +1789,7 @@ function bindInput() {
   el.openHelp.addEventListener('click', openHelp);
   if (el.toggleTestMode) el.toggleTestMode.addEventListener('click', toggleTestMode);
   if (el.openDashboard) el.openDashboard.addEventListener('click', () => {
+    localStorage.setItem(RETURN_ZONE_KEY, state.zoneId);
     window.location.href = 'dashboard.html';
   });
   el.closeBadge.addEventListener('click', closeBadgeModal);
