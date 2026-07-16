@@ -1785,7 +1785,7 @@ kbd {
 
 /* ── 노트 모달 — 밝은 종이 테마 ── */
 .notebook-panel {
-  width: min(840px, calc(100vw - 32px));
+  width: min(1040px, calc(100vw - 32px));
   max-height: 96vh;
   overflow-y: auto;
   background: #fdf8f0 !important;
@@ -1803,15 +1803,15 @@ kbd {
 .notebook-cards {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  margin-top: 16px;
+  gap: 20px;
+  margin-top: 18px;
 }
 
 /* ── 플립 카드 ── */
 .nb-flip-card {
   cursor: pointer;
   perspective: 1200px;
-  height: 455px;
+  height: 580px;
   border-radius: 14px;
   transform: translateY(0);
   transition: transform 0.22s ease;
@@ -2166,7 +2166,7 @@ kbd {
 }
 .nb-ai-response {
   margin-top: 9px;
-  max-height: 178px;
+  max-height: 270px;
   overflow-y: auto;
   padding: 8px 9px;
   border: 1px solid color-mix(in srgb, var(--c) 24%, #d0c0a0);
@@ -2331,7 +2331,7 @@ kbd {
 
 @media (max-width: 560px) {
   .notebook-cards { grid-template-columns: 1fr; }
-  .nb-flip-card { height: 470px; }
+  .nb-flip-card { height: 560px; }
 }
 
 /* ── 배지 노트북 ── */

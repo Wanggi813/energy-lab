@@ -476,63 +476,70 @@ function downloadCertificate() {
   const total = getTotalScore();
   const grade = getGrade(total);
   const missions = MISSIONS.map(m => getMissionRecord(m.id));
+  const badges = window.ElabBadges ? window.ElabBadges.getAll().filter(b => b.unlocked) : [];
   const dateStr = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 
-  const W = 900, H = 640;
+  // 물리 노트와 같은 톤의 밝은 종이 테마 (라이트 배경에서도 대비가 확보된 색상)
+  const ink = '#1c1410';
+  const muted = '#6a5040';
+  const line = '#d4c4a8';
+  const paper = '#fdf8f0';
+  const paperSoft = 'rgba(120, 90, 40, 0.05)';
+  const CERT_GRADE_COLOR = { S: '#b8790a', A: '#1f9d64', B: '#2c8bff', C: '#8a7454', D: '#9a8a6e' };
+  const gradeColor = CERT_GRADE_COLOR[grade.label] || muted;
+
+  const W = 900, H = 780;
   const cvs = document.createElement('canvas');
   cvs.width = W; cvs.height = H;
   const ctx = cvs.getContext('2d');
 
-  // 배경
-  ctx.fillStyle = '#07101d';
+  // 배경 — 크림색 종이
+  ctx.fillStyle = paper;
   ctx.fillRect(0, 0, W, H);
 
-  // 테두리 글로우
-  ctx.strokeStyle = grade.color;
+  // 이중 테두리 — 졸업장 느낌
+  ctx.strokeStyle = gradeColor;
   ctx.lineWidth = 3;
-  ctx.shadowColor = grade.color;
-  ctx.shadowBlur = 18;
   ctx.strokeRect(18, 18, W - 36, H - 36);
-  ctx.shadowBlur = 0;
+  ctx.strokeStyle = line;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(26, 26, W - 52, H - 52);
 
   // 상단 로고
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 13px Courier New';
+  ctx.fillStyle = muted;
+  ctx.font = 'bold 13px Malgun Gothic, Apple SD Gothic Neo, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('PHYSICAL ENERGY LAB', W / 2, 60);
 
-  ctx.fillStyle = 'rgba(200,230,255,0.45)';
-  ctx.font = '11px Courier New';
+  ctx.fillStyle = 'rgba(106, 80, 64, 0.7)';
+  ctx.font = '11px Malgun Gothic, Apple SD Gothic Neo, sans-serif';
   ctx.fillText('선수 성장 연구소', W / 2, 80);
 
   // 구분선
-  ctx.strokeStyle = `${grade.color}66`;
+  ctx.strokeStyle = `${gradeColor}66`;
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(60, 95); ctx.lineTo(W - 60, 95); ctx.stroke();
 
   // 인증서 제목
-  ctx.fillStyle = grade.color;
-  ctx.shadowColor = grade.color;
-  ctx.shadowBlur = 12;
+  ctx.fillStyle = gradeColor;
   ctx.font = 'bold 28px Malgun Gothic, Apple SD Gothic Neo, sans-serif';
   ctx.fillText('에너지 탐구 완료 인증서', W / 2, 148);
-  ctx.shadowBlur = 0;
 
   // 이름
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = ink;
   ctx.font = 'bold 42px Malgun Gothic, Apple SD Gothic Neo, sans-serif';
   ctx.fillText(name, W / 2, 218);
 
-  ctx.fillStyle = 'rgba(168,189,208,0.8)';
+  ctx.fillStyle = muted;
   ctx.font = '14px Malgun Gothic, Apple SD Gothic Neo, sans-serif';
   ctx.fillText('위 탐구자는 물리 에너지 실험 4개 미션을 수행하고 에너지 보존 법칙을 체득하였음을 인증합니다.', W / 2, 248);
 
   // 구분선
-  ctx.strokeStyle = 'rgba(200,230,255,0.15)';
+  ctx.strokeStyle = line;
   ctx.beginPath(); ctx.moveTo(60, 268); ctx.lineTo(W - 60, 268); ctx.stroke();
 
   // 미션별 점수
-  const missionColors = ['#4fc3ff', '#ff6b6b', '#45d18c', '#f3c451'];
+  const missionColors = ['#2c8bff', '#e0475a', '#1f9d64', '#b8790a'];
   const missionIcons  = ['🏂', '🥌', '🪂', '🏅'];
   const missionNames  = ['하프파이프', '마찰 실험', '번지점프', '챔피언십'];
   const colW = (W - 120) / 4;
@@ -543,67 +550,104 @@ function downloadCertificate() {
     const pct = s / 1000;
     const col = missionColors[i];
 
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.fillStyle = paperSoft;
     ctx.beginPath();
     ctx.roundRect(60 + i * colW + 8, 280, colW - 16, 160, 8);
     ctx.fill();
 
+    ctx.fillStyle = '#000';
     ctx.font = '22px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(missionIcons[i], x, 316);
 
     ctx.fillStyle = col;
-    ctx.font = `bold 11px Courier New`;
+    ctx.font = `bold 11px Malgun Gothic, Apple SD Gothic Neo, sans-serif`;
     ctx.fillText(`MISSION ${i + 1}`, x, 336);
 
-    ctx.fillStyle = 'rgba(200,230,255,0.6)';
+    ctx.fillStyle = muted;
     ctx.font = `10px Malgun Gothic, sans-serif`;
     ctx.fillText(missionNames[i], x, 352);
 
     // 점수 바
     const bx = 60 + i * colW + 20, bw = colW - 40, bh = 6, by = 364;
-    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillStyle = 'rgba(120, 90, 40, 0.12)';
     ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 3); ctx.fill();
     if (pct > 0) {
       ctx.fillStyle = col;
-      ctx.shadowColor = col; ctx.shadowBlur = 6;
       ctx.beginPath(); ctx.roundRect(bx, by, bw * pct, bh, 3); ctx.fill();
-      ctx.shadowBlur = 0;
     }
 
-    ctx.fillStyle = m.status === 'clear' ? col : 'rgba(168,189,208,0.4)';
-    ctx.font = `bold 20px Courier New`;
+    ctx.fillStyle = m.status === 'clear' ? col : 'rgba(106, 80, 64, 0.4)';
+    ctx.font = `bold 20px Malgun Gothic, Apple SD Gothic Neo, sans-serif`;
     ctx.fillText(s, x, 406);
 
-    ctx.fillStyle = 'rgba(168,189,208,0.5)';
-    ctx.font = `9px Courier New`;
+    ctx.fillStyle = 'rgba(106, 80, 64, 0.6)';
+    ctx.font = `9px Malgun Gothic, Apple SD Gothic Neo, sans-serif`;
     ctx.fillText('/ 1000', x, 420);
   });
 
-  // 총점 & 등급
-  ctx.strokeStyle = 'rgba(200,230,255,0.15)';
+  // 구분선
+  ctx.strokeStyle = line;
   ctx.beginPath(); ctx.moveTo(60, 460); ctx.lineTo(W - 60, 460); ctx.stroke();
 
-  ctx.fillStyle = grade.color;
-  ctx.shadowColor = grade.color; ctx.shadowBlur = 16;
-  ctx.font = `bold 52px Courier New`;
+  // 획득한 배지
+  ctx.fillStyle = muted;
+  ctx.font = 'bold 12px Malgun Gothic, Apple SD Gothic Neo, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(grade.label, W / 2 - 80, 530);
-  ctx.shadowBlur = 0;
+  ctx.fillText(`🏅 획득한 배지 (${badges.length} / ${window.ElabBadges ? window.ElabBadges.BADGE_DEFS.length : 7})`, W / 2, 490);
 
-  ctx.fillStyle = '#fff';
-  ctx.font = `bold 36px Courier New`;
-  ctx.fillText(total.toLocaleString('ko-KR'), W / 2 + 40, 520);
+  if (badges.length === 0) {
+    ctx.fillStyle = 'rgba(106, 80, 64, 0.55)';
+    ctx.font = '13px Malgun Gothic, Apple SD Gothic Neo, sans-serif';
+    ctx.fillText('아직 획득한 배지가 없어요 — 계속 도전해보세요!', W / 2, 535);
+  } else {
+    const bcolW = (W - 120) / badges.length;
+    badges.forEach((b, i) => {
+      const bx = 60 + i * bcolW + bcolW / 2;
 
-  ctx.fillStyle = 'rgba(168,189,208,0.6)';
-  ctx.font = `12px Courier New`;
-  ctx.fillText('/ 3,999 pt', W / 2 + 40, 540);
+      ctx.beginPath();
+      ctx.arc(bx, 528, 26, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(184, 121, 10, 0.12)';
+      ctx.fill();
+      ctx.strokeStyle = '#b8790a';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.fillStyle = '#000';
+      ctx.font = '24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(b.icon, bx, 537);
+
+      ctx.fillStyle = muted;
+      ctx.font = '10px Malgun Gothic, Apple SD Gothic Neo, sans-serif';
+      const label = b.name.length > 7 ? `${b.name.slice(0, 6)}…` : b.name;
+      ctx.fillText(label, bx, 572);
+    });
+  }
+
+  // 구분선
+  ctx.strokeStyle = line;
+  ctx.beginPath(); ctx.moveTo(60, 600); ctx.lineTo(W - 60, 600); ctx.stroke();
+
+  // 총점 & 등급
+  ctx.fillStyle = gradeColor;
+  ctx.font = `bold 52px Malgun Gothic, Apple SD Gothic Neo, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText(grade.label, W / 2 - 80, 670);
+
+  ctx.fillStyle = ink;
+  ctx.font = `bold 36px Malgun Gothic, Apple SD Gothic Neo, sans-serif`;
+  ctx.fillText(total.toLocaleString('ko-KR'), W / 2 + 40, 660);
+
+  ctx.fillStyle = muted;
+  ctx.font = `12px Malgun Gothic, Apple SD Gothic Neo, sans-serif`;
+  ctx.fillText('/ 3,999 pt', W / 2 + 40, 680);
 
   // 날짜
-  ctx.fillStyle = 'rgba(168,189,208,0.45)';
+  ctx.fillStyle = 'rgba(106, 80, 64, 0.7)';
   ctx.font = `11px Malgun Gothic, Apple SD Gothic Neo, sans-serif`;
   ctx.textAlign = 'center';
-  ctx.fillText(dateStr, W / 2, 590);
+  ctx.fillText(dateStr, W / 2, 730);
 
   // 다운로드
   const link = document.createElement('a');
