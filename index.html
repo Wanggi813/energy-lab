@@ -240,7 +240,14 @@
         setTimeout(() => introEl.classList.add('hidden'), 500);
       }
 
-      document.getElementById('intro-enter').addEventListener('click', enterLobby);
+      document.getElementById('intro-enter').addEventListener('click', () => {
+        // 이전에 평가용으로 들어왔다가 새로고침 후 일반 입장을 누르면
+        // 평가용 모드가 그대로 켜져 있던 문제 방지: 일반 입장은 항상 평가용을 끈다.
+        if (typeof isTestMode === 'function' && typeof toggleTestMode === 'function' && isTestMode()) {
+          toggleTestMode();
+        }
+        enterLobby();
+      });
 
       document.getElementById('intro-enter-eval').addEventListener('click', () => {
         if (typeof isTestMode === 'function' && typeof toggleTestMode === 'function' && !isTestMode()) {
