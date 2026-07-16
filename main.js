@@ -624,6 +624,10 @@ function updateTestModeButton() {
   el.toggleTestMode.title = active
     ? '평가용 모드를 끄고 실제 진행도로 돌아갑니다.'
     : '모든 미션을 완료 상태로 보여주고 랭킹 저장은 막습니다.';
+  // 일반 입장(평가용 아님)에서는 평가용 버튼 자체를 보여주지 않는다.
+  // 평가용 모드는 인트로 화면의 "평가용으로 참여" 버튼으로만 켜고, 켜진 상태일 때만
+  // HUD에 "평가 종료" 버튼이 나타나 끌 수 있게 한다.
+  el.toggleTestMode.style.display = active ? '' : 'none';
 }
 
 function setTestMode(active) {
@@ -1785,7 +1789,7 @@ function bindInput() {
   el.openHelp.addEventListener('click', openHelp);
   if (el.toggleTestMode) el.toggleTestMode.addEventListener('click', toggleTestMode);
   if (el.openDashboard) el.openDashboard.addEventListener('click', () => {
-    window.open('dashboard.html', '_blank', 'noopener');
+    window.location.href = 'dashboard.html';
   });
   el.closeBadge.addEventListener('click', closeBadgeModal);
   el.badgeModal.addEventListener('click', event => {
