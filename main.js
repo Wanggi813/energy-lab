@@ -6,6 +6,9 @@ const RETURN_ZONE_KEY = 'athlete-lab-return-zone';
 const TUTORIAL_KEY = 'elab-tutorial-v1';
 const NOTEBOOK_AI_STATS_KEY = 'elab-notebook-ai-question-count-v1';
 const TEST_NOTEBOOK_AI_STATS_KEY = 'elab-notebook-ai-question-count-test-v1';
+const NOTEBOOK_AI_POINTS_KEY = 'elab-ai-learning-points-v1';
+const TEST_NOTEBOOK_AI_POINTS_KEY = 'elab-ai-learning-points-test-v1';
+const NOTEBOOK_AI_POINTS_PER_CORRECT = 10;
 const NOTEBOOK_AI_API = '/api/gemini';
 const TEST_MODE_KEY = 'elab-evaluation-mode-v1';
 
@@ -308,6 +311,7 @@ const el = {
   openBadges: document.getElementById('openBadges'),
   openHelp: document.getElementById('openHelp'),
   toggleTestMode: document.getElementById('toggleTestMode'),
+  openDashboard: document.getElementById('openDashboard'),
   closeBadge: document.getElementById('closeBadge'),
   badgeModal: document.getElementById('badgeModal'),
   badgeGrid: document.getElementById('badgeGrid'),
@@ -626,6 +630,7 @@ function setTestMode(active) {
   if (active) {
     localStorage.setItem(TEST_MODE_KEY, '1');
     localStorage.removeItem(TEST_NOTEBOOK_AI_STATS_KEY);
+    localStorage.removeItem(TEST_NOTEBOOK_AI_POINTS_KEY);
   } else {
     localStorage.removeItem(TEST_MODE_KEY);
   }
@@ -713,6 +718,7 @@ function renderNotebook() {
                 <span class="nb-ai-kicker">AI 문제 풀어보기</span>
                 <span class="nb-ai-meta">${escapeHtml(aiDifficulty.label)} · ${aiCount}회</span>
               </div>
+              <span class="nb-ai-points">⭐ 학습 포인트 <strong data-ai-points-value>${getNotebookAiPoints()}</strong></span>
               <button class="nb-ai-btn" type="button" data-mission="${c.missionId}">AI 질문 받기</button>
               <div class="nb-ai-response" aria-live="polite"></div>
             </div>
@@ -744,6 +750,23 @@ function getNotebookAiStatsKey() {
 function getNotebookAiQuestionCount(missionId) {
   const stats = readNotebookAiStats();
   return Math.max(0, Number(stats[String(missionId)] || 0));
+}
+
+function getNotebookAiPointsKey() {
+  return isTestMode() ? TEST_NOTEBOOK_AI_POINTS_KEY : NOTEBOOK_AI_POINTS_KEY;
+}
+
+function getNotebookAiPoints() {
+  return Math.max(0, Number(localStorage.getItem(getNotebookAiPointsKey())) || 0);
+}
+
+function addNotebookAiPoints(amount) {
+  const next = getNotebookAiPoints() + amount;
+  localStorage.setItem(getNotebookAiPointsKey(), String(next));
+  document.querySelectorAll('[data-ai-points-value]').forEach(el => {
+    el.textContent = next;
+  });
+  return next;
 }
 
 function setNotebookAiQuestionCount(missionId, count) {
@@ -799,6 +822,7 @@ function renderNotebookAiQuiz(quiz) {
       data-correct="${index === answerIndex ? '1' : '0'}"
       data-choice-label="${labels[index]}"
       data-explanation="${escapeHtml(quiz.explanation || '')}"
+      data-detail="${escapeHtml(quiz.detail || '')}"
     >
       <span>${labels[index]}</span>
       <strong>${escapeHtml(choice)}</strong>
@@ -825,6 +849,7 @@ function handleNotebookAiChoice(button) {
   const correctButton = choices.find(choice => choice.dataset.correct === '1');
   const isCorrect = button.dataset.correct === '1';
   const explanation = button.dataset.explanation || correctButton?.dataset.explanation || '';
+  const detail = button.dataset.detail || correctButton?.dataset.detail || '';
   const correctLabel = correctButton?.dataset.choiceLabel || '';
 
   choices.forEach(choice => {
@@ -838,8 +863,22 @@ function handleNotebookAiChoice(button) {
     feedback.className = `nb-ai-feedback ${isCorrect ? 'is-correct' : 'is-wrong'}`;
     feedback.textContent = isCorrect
       ? `정답입니다. ${explanation}`
-      : `다시 볼 포인트가 있어요. 정답은 ${correctLabel}입니다. ${explanation}`;
+      : `다시 볼 포인트가 있어요. 정답은 ${correctLabel}입니다. ${explanation} ${detail}`.trim();
   }
+
+  if (isCorrect) {
+    addNotebookAiPoints(NOTEBOOK_AI_POINTS_PER_CORRECT);
+    showAiPointsToast(button, NOTEBOOK_AI_POINTS_PER_CORRECT);
+  }
+}
+
+function showAiPointsToast(anchor, amount) {
+  const toast = document.createElement('span');
+  toast.className = 'nb-ai-points-toast';
+  toast.textContent = `+${amount}`;
+  anchor.style.position = 'relative';
+  anchor.appendChild(toast);
+  setTimeout(() => toast.remove(), 900);
 }
 
 async function requestNotebookAiQuestion(button) {
@@ -859,7 +898,7 @@ async function requestNotebookAiQuestion(button) {
   button.textContent = '질문 만드는 중...';
   if (response) {
     response.classList.add('is-loading');
-    response.innerHTML = 'AI 코치가 점수와 복습 횟수에 맞춰 문제를 고르는 중입니다.';
+    response.innerHTML = '<span class="nb-ai-spinner" aria-hidden="true"></span><span>AI 코치가 점수와 복습 횟수에 맞춰 문제를 고르는 중입니다.</span>';
   }
 
   try {
@@ -1745,6 +1784,9 @@ function bindInput() {
   el.openBadges.addEventListener('click', openBadgeModal);
   el.openHelp.addEventListener('click', openHelp);
   if (el.toggleTestMode) el.toggleTestMode.addEventListener('click', toggleTestMode);
+  if (el.openDashboard) el.openDashboard.addEventListener('click', () => {
+    window.open('dashboard.html', '_blank', 'noopener');
+  });
   el.closeBadge.addEventListener('click', closeBadgeModal);
   el.badgeModal.addEventListener('click', event => {
     if (event.target === el.badgeModal) closeBadgeModal();

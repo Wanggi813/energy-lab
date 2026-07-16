@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Energy Lab — 현황판</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+  :root {
+    --ink: #1c1410;
+    --muted: #6a5040;
+    --line: #e3d5bd;
+    --paper: #fffaf0;
+    --paper-strong: #fffdf8;
+    --blue: #2c8bff;
+    --green: #1f9d64;
+    --gold: #b8790a;
+    --gold-fill: #e3a72e;
+    --red: #e0475a;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    color: var(--ink);
+    font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  }
+  body {
+    padding: 28px clamp(16px, 4vw, 56px) 64px;
+    background:
+      radial-gradient(ellipse 900px 500px at 10% -10%, rgba(44, 139, 255, 0.08), transparent 60%),
+      radial-gradient(ellipse 800px 500px at 92% 0%, rgba(31, 157, 100, 0.08), transparent 55%),
+      #f4ecdb;
+  }
+  a { color: var(--blue); }
+
+  /* ── 헤더 ── */
+  .dash-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .dash-title {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .dash-kicker {
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+  }
+  .dash-title h1 {
+    margin: 0;
+    font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+    font-weight: 900;
+    color: var(--ink);
+  }
+  .dash-sub {
+    margin: 0;
+    font-size: 0.84rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .dash-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .dash-btn {
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    font: inherit;
+    font-weight: 800;
+    font-size: 0.82rem;
+    cursor: pointer;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.04);
+    transition: background 0.15s, transform 0.15s;
+  }
+  .dash-btn:hover { background: #fff; transform: translateY(-1px); }
+  .dash-btn--home {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    border-color: rgba(44, 139, 255, 0.35);
+    background: rgba(44, 139, 255, 0.1);
+    color: #0d4d94;
+  }
+
+  /* ── 통계 카드 ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .stat-card {
+    position: relative;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    box-shadow: 0 2px 10px rgba(120, 90, 40, 0.06);
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: var(--accent, var(--blue));
+  }
+  .stat-card .stat-icon {
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .stat-card span.stat-label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .stat-card strong {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--ink);
+  }
+
+  /* ── TOP 3 ── */
+  .podium {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 26px;
+  }
+  .podium-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .podium-row {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    border-radius: 14px;
+    border: 1px solid var(--rank-color, var(--line));
+    background: linear-gradient(90deg, color-mix(in srgb, var(--rank-color, var(--blue)) 12%, var(--paper-strong)), var(--paper-strong));
+    box-shadow: 0 6px 20px rgba(120, 90, 40, 0.08);
+    animation: podiumIn 0.5s ease both;
+  }
+  .podium-row:nth-child(1) { animation-delay: 0.02s; }
+  .podium-row:nth-child(2) { animation-delay: 0.1s; }
+  .podium-row:nth-child(3) { animation-delay: 0.18s; }
+  @keyframes podiumIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .podium-rank {
+    font-size: 1.8rem;
+    text-align: center;
+  }
+  .podium-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+  .podium-avatar {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 900;
+    font-size: 1rem;
+    color: #fff;
+    background: var(--rank-color, var(--blue));
+  }
+  .podium-name-wrap {
+    min-width: 0;
+  }
+  .podium-name {
+    font-weight: 900;
+    font-size: 1.05rem;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .podium-name .crown { margin-left: 4px; }
+  .podium-grade {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .podium-score {
+    text-align: right;
+    white-space: nowrap;
+  }
+  .podium-score strong {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: color-mix(in srgb, var(--rank-color, var(--blue)) 78%, black);
+  }
+  .podium-score span {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+
+  /* ── 툴바 ── */
+  .dash-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .dash-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  #searchInput {
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.84rem;
+    min-width: 220px;
+  }
+  #searchInput::placeholder { color: var(--muted); }
+  #statusText {
+    font-size: 0.76rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  /* ── 리스트 ── */
+  .list-wrap {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--paper);
+    box-shadow: 0 2px 14px rgba(120, 90, 40, 0.07);
+    overflow: hidden;
+  }
+  .list-head {
+    display: grid;
+    grid-template-columns: 56px minmax(120px, 1.4fr) 74px 110px repeat(4, minmax(84px, 1fr)) 96px;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #f3e9d4;
+    border-bottom: 1px solid var(--line);
+  }
+  .list-head span {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .list-head span:hover { color: var(--ink); }
+  .list-head span.is-sorted { color: var(--blue); }
+  .list-head span.is-sorted::after { content: ' ▾'; }
+  .list-body {
+    max-height: 62vh;
+    overflow-y: auto;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 56px minmax(120px, 1.4fr) 74px 110px repeat(4, minmax(84px, 1fr)) 96px;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid #f0e6d2;
+    font-size: 0.82rem;
+    transition: background 0.12s;
+  }
+  .row:hover { background: #fbf3e2; }
+  .row:last-child { border-bottom: none; }
+  .cell-rank {
+    color: var(--muted);
+    font-weight: 800;
+    text-align: center;
+  }
+  .cell-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .cell-name .mini-avatar {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 0.68rem;
+    font-weight: 900;
+    color: #fff;
+    background: var(--blue);
+  }
+  .cell-name span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .grade-pill {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-weight: 900;
+    font-size: 0.72rem;
+    text-align: center;
+  }
+  .cell-score strong {
+    font-size: 0.98rem;
+    font-weight: 900;
+    color: var(--ink);
+  }
+  .cell-score small {
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .mission-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    color: var(--ink);
+  }
+  .mission-cell .m-icon { font-size: 0.85rem; }
+  .mission-cell .bar {
+    width: 34px;
+    height: 5px;
+    border-radius: 999px;
+    background: #ece0c8;
+    overflow: hidden;
+  }
+  .mission-cell .bar > i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+  }
+  .cell-date {
+    color: var(--muted);
+    font-size: 0.74rem;
+    white-space: nowrap;
+  }
+  .empty-state, .loading-state {
+    text-align: center;
+    color: var(--muted);
+    padding: 48px 16px;
+    font-size: 0.88rem;
+  }
+  .empty-state .big-emoji, .loading-state .big-emoji {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 8px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .podium-row { animation: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="dash-top">
+    <div class="dash-title">
+      <span class="dash-kicker">✨ TEAM DASHBOARD</span>
+      <h1>선수 성장 연구소 현황판</h1>
+      <p class="dash-sub">오늘도 에너지를 탐구한 모든 선수들, 수고 많았습니다 🎉</p>
+    </div>
+    <div class="dash-actions">
+      <button class="dash-btn" id="refreshBtn" type="button">↻ 새로고침</button>
+      <a class="dash-btn dash-btn--home" href="index.html">← 로비로</a>
+    </div>
+  </div>
+
+  <div class="stat-grid" id="statGrid"></div>
+
+  <div class="podium" id="podium"></div>
+
+  <div class="dash-toolbar">
+    <div class="dash-toolbar-left">
+      <input id="searchInput" type="text" placeholder="🔍 이름으로 검색">
+      <span id="statusText">불러오는 중...</span>
+    </div>
+  </div>
+
+  <div class="list-wrap">
+    <div class="list-head">
+      <span data-sort="rank">순위</span>
+      <span data-sort="name">이름</span>
+      <span data-sort="grade">등급</span>
+      <span data-sort="score">총점</span>
+      <span data-sort="m0">🏂 하프</span>
+      <span data-sort="m1">🥌 컬링</span>
+      <span data-sort="m2">🪂 번지</span>
+      <span data-sort="m3">🏅 종합</span>
+      <span data-sort="savedAt">기록 시각</span>
+    </div>
+    <div class="list-body" id="rankBody">
+      <div class="loading-state"><span class="big-emoji">⏳</span>불러오는 중...</div>
+    </div>
+  </div>
+
+  <script>
+    const RANK_KEY = 'athlete-lab-ranking-v1';
+    const MISSION_MAX = [1000, 1000, 999, 1000];
+    const MISSION_ICONS = ['🏂', '🥌', '🪂', '🏅'];
+    const MISSION_COLORS = ['#2c8bff', '#e0475a', '#1f9d64', '#e3a72e'];
+    const MISSION_LABELS = ['하프파이프', '컬링', '번지점프', '종합점검'];
+
+    const GRADE_CONFIG = [
+      { min: 3500, label: 'S', color: '#b8790a', bg: 'rgba(184,121,10,.14)' },
+      { min: 2500, label: 'A', color: '#1f9d64', bg: 'rgba(31,157,100,.13)' },
+      { min: 1500, label: 'B', color: '#2c8bff', bg: 'rgba(44,139,255,.13)' },
+      { min: 500,  label: 'C', color: '#7c6a50', bg: 'rgba(124,106,80,.12)' },
+      { min: 0,    label: 'D', color: '#9a8a6e', bg: 'rgba(154,138,110,.12)' },
+    ];
+
+    const RANK_STYLE = [
+      { color: '#b8790a', medal: '🥇', crown: '👑' },
+      { color: '#8a97a3', medal: '🥈', crown: '' },
+      { color: '#c17a3a', medal: '🥉', crown: '' },
+    ];
+
+    function getGrade(score) {
+      return GRADE_CONFIG.find(g => score >= g.min) || GRADE_CONFIG[GRADE_CONFIG.length - 1];
+    }
+
+    function readLocalCache() {
+      try {
+        const data = JSON.parse(localStorage.getItem(RANK_KEY) || '[]');
+        return Array.isArray(data) ? data : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    let allEntries = [];
+    let sortKey = 'score';
+    let sortDir = -1;
+
+    async function loadEntries() {
+      const statusText = document.getElementById('statusText');
+      statusText.textContent = '불러오는 중...';
+      try {
+        const res = await fetch('/api/ranking');
+        if (!res.ok) throw new Error('서버 응답 오류');
+        const data = await res.json();
+        allEntries = Array.isArray(data) ? data : [];
+        statusText.textContent = `🌐 서버 기록 ${allEntries.length}건을 불러왔습니다.`;
+      } catch (err) {
+        allEntries = readLocalCache();
+        statusText.textContent = `📴 서버에 연결하지 못해 이 기기의 로컬 기록 ${allEntries.length}건을 보여줍니다.`;
+      }
+      renderAll();
+    }
+
+    function computeStats() {
+      const grid = document.getElementById('statGrid');
+      const count = allEntries.length;
+      if (count === 0) {
+        grid.innerHTML = '';
+        return;
+      }
+      const avgScore = Math.round(allEntries.reduce((sum, e) => sum + (e.score || 0), 0) / count);
+      const missionAverages = [0, 1, 2, 3].map(i => {
+        const sum = allEntries.reduce((acc, e) => acc + ((e.missions && e.missions[i]) || 0), 0);
+        return Math.round(sum / count);
+      });
+      grid.innerHTML = `
+        <div class="stat-card" style="--accent:${'#b8790a'}">
+          <span class="stat-icon">👥</span>
+          <span class="stat-label">참여 인원</span>
+          <strong>${count}명</strong>
+        </div>
+        <div class="stat-card" style="--accent:${'#2c8bff'}">
+          <span class="stat-icon">⭐</span>
+          <span class="stat-label">평균 총점</span>
+          <strong>${avgScore.toLocaleString('ko-KR')} pt</strong>
+        </div>
+        ${missionAverages.map((avg, i) => `
+          <div class="stat-card" style="--accent:${MISSION_COLORS[i]}">
+            <span class="stat-icon">${MISSION_ICONS[i]}</span>
+            <span class="stat-label">${MISSION_LABELS[i]} 평균</span>
+            <strong>${avg} <small style="font-size:0.62em;color:var(--muted);font-weight:700;">/ ${MISSION_MAX[i]}</small></strong>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    function renderPodium() {
+      const el = document.getElementById('podium');
+      const top3 = [...allEntries].sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 3);
+      if (top3.length === 0) {
+        el.innerHTML = '';
+        return;
+      }
+      el.innerHTML = `
+        <div class="podium-heading">🏆 오늘의 TOP 3</div>
+        ${top3.map((e, i) => {
+          const style = RANK_STYLE[i];
+          const grade = getGrade(e.score || 0);
+          const initial = escapeHtml((e.name || '코치').trim().charAt(0) || '?');
+          return `
+            <div class="podium-row" style="--rank-color:${style.color}">
+              <div class="podium-rank">${style.medal}</div>
+              <div class="podium-info">
+                <div class="podium-avatar">${initial}</div>
+                <div class="podium-name-wrap">
+                  <div class="podium-name">${escapeHtml(e.name || '코치')}${style.crown ? `<span class="crown">${style.crown}</span>` : ''}</div>
+                  <div class="podium-grade">${grade.label}등급</div>
+                </div>
+              </div>
+              <div class="podium-score">
+                <strong>${(e.score || 0).toLocaleString('ko-KR')}</strong>
+                <span>/ 3,999 pt</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      `;
+    }
+
+    function sortedEntries() {
+      const filterText = document.getElementById('searchInput').value.trim().toLowerCase();
+      let rows = [...allEntries]
+        .sort((a, b) => (b.score || 0) - (a.score || 0))
+        .map((e, i) => ({ ...e, _originalRank: i + 1 }));
+      if (filterText) {
+        rows = rows.filter(e => (e.name || '').toLowerCase().includes(filterText));
+      }
+      rows.sort((a, b) => {
+        let av, bv;
+        if (sortKey === 'rank') { av = a._originalRank; bv = b._originalRank; }
+        else if (sortKey === 'name') { av = a.name || ''; bv = b.name || ''; }
+        else if (sortKey === 'grade') { av = getGrade(a.score || 0).label; bv = getGrade(b.score || 0).label; }
+        else if (sortKey === 'savedAt') { av = a.savedAt || ''; bv = b.savedAt || ''; }
+        else if (sortKey.startsWith('m')) {
+          const idx = Number(sortKey.slice(1));
+          av = (a.missions && a.missions[idx]) || 0;
+          bv = (b.missions && b.missions[idx]) || 0;
+        } else { av = a.score || 0; bv = b.score || 0; }
+        if (av < bv) return -1 * sortDir;
+        if (av > bv) return 1 * sortDir;
+        return 0;
+      });
+      return rows;
+    }
+
+    function missionCellHTML(score, max, index) {
+      const clamped = Math.max(0, Math.min(max, Number(score) || 0));
+      const pct = Math.round((clamped / max) * 100);
+      return `<span class="mission-cell"><span class="bar"><i style="width:${pct}%;background:${MISSION_COLORS[index]}"></i></span>${clamped}</span>`;
+    }
+
+    function formatSavedAt(value) {
+      const date = new Date(value);
+      if (!Number.isFinite(date.getTime())) return '-';
+      return date.toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderTable() {
+      const rows = sortedEntries();
+      const body = document.getElementById('rankBody');
+      if (rows.length === 0) {
+        body.innerHTML = allEntries.length === 0
+          ? '<div class="empty-state"><span class="big-emoji">🌱</span>아직 저장된 기록이 없습니다. 첫 도전을 기다리는 중이에요!</div>'
+          : '<div class="empty-state"><span class="big-emoji">🔍</span>검색 결과가 없습니다.</div>';
+        return;
+      }
+      body.innerHTML = rows.map((e) => {
+        const grade = getGrade(e.score || 0);
+        const missions = e.missions || [0, 0, 0, 0];
+        const initial = escapeHtml((e.name || '코치').trim().charAt(0) || '?');
+        return `
+          <div class="row">
+            <div class="cell-rank">${e._originalRank}</div>
+            <div class="cell-name"><span class="mini-avatar">${initial}</span><span>${escapeHtml(e.name || '코치')}</span></div>
+            <div><span class="grade-pill" style="color:${grade.color};background:${grade.bg}">${grade.label}</span></div>
+            <div class="cell-score"><strong>${(e.score || 0).toLocaleString('ko-KR')}</strong> <small>/3,999</small></div>
+            <div>${missionCellHTML(missions[0], MISSION_MAX[0], 0)}</div>
+            <div>${missionCellHTML(missions[1], MISSION_MAX[1], 1)}</div>
+            <div>${missionCellHTML(missions[2], MISSION_MAX[2], 2)}</div>
+            <div>${missionCellHTML(missions[3], MISSION_MAX[3], 3)}</div>
+            <div class="cell-date">${formatSavedAt(e.savedAt)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[char]);
+    }
+
+    function updateSortHeaders() {
+      document.querySelectorAll('.list-head span').forEach(node => {
+        node.classList.toggle('is-sorted', node.dataset.sort === sortKey);
+      });
+    }
+
+    function renderAll() {
+      computeStats();
+      renderPodium();
+      renderTable();
+      updateSortHeaders();
+    }
+
+    document.querySelectorAll('.list-head span').forEach(node => {
+      node.addEventListener('click', () => {
+        const key = node.dataset.sort;
+        if (sortKey === key) {
+          sortDir *= -1;
+        } else {
+          sortKey = key;
+          sortDir = key === 'name' ? 1 : -1;
+        }
+        renderTable();
+        updateSortHeaders();
+      });
+    });
+
+    document.getElementById('searchInput').addEventListener('input', renderTable);
+    document.getElementById('refreshBtn').addEventListener('click', loadEntries);
+
+    loadEntries();
+  </script>
+</body>
+</html>
