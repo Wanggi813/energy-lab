@@ -119,7 +119,8 @@ function normalizeQuiz(raw, difficulty) {
     choices,
     answerIndex,
     hint: cleanText(raw.hint, 120),
-    explanation: cleanText(raw.explanation, 140)
+    explanation: cleanText(raw.explanation, 140),
+    detail: cleanText(raw.detail, 220)
   };
 }
 
@@ -137,7 +138,8 @@ function createFallbackQuiz(concept, difficulty, questionCount, score = 0) {
       ],
       answerIndex: 0,
       hint: '노트의 에너지 흐름 화살표를 먼저 보세요.',
-      explanation: '에너지는 사라지지 않고 다른 형태로 전환됩니다.'
+      explanation: '에너지는 사라지지 않고 다른 형태로 전환됩니다.',
+      detail: `"완전히 사라진다"는 흔한 오개념입니다. ${title}에서는 ${flow || '한 형태의 에너지가 다른 형태로'} 바뀔 뿐, 전체 양은 그대로 보존됩니다. 속도 변화도 에너지가 사라지는 게 아니라 형태가 바뀌는 신호로 읽어야 합니다.`
     },
     {
       question: `${formula}에서 변인이 커지면 관련 에너지는 어떻게 달라질까요?`,
@@ -148,7 +150,8 @@ function createFallbackQuiz(concept, difficulty, questionCount, score = 0) {
       ],
       answerIndex: 0,
       hint: '공식에서 어떤 문자가 곱해지는지 살펴보세요.',
-      explanation: '공식의 변인 관계를 보면 에너지 변화를 예측할 수 있습니다.'
+      explanation: '공식의 변인 관계를 보면 에너지 변화를 예측할 수 있습니다.',
+      detail: `${formula} 공식에서 곱해지는 변인이 커지면 그만큼 결과값도 함께 커집니다. "항상 변화가 없다"거나 "무조건 0"이라는 생각은 변인들이 서로 곱해지는 관계라는 사실을 놓친 것입니다.`
     },
     {
       question: `${title}을 설명할 때 가장 조심해야 할 생각은 무엇일까요?`,
@@ -159,7 +162,8 @@ function createFallbackQuiz(concept, difficulty, questionCount, score = 0) {
       ],
       answerIndex: 0,
       hint: '에너지 보존 관점에서 틀린 표현을 찾으세요.',
-      explanation: '에너지는 사라지는 것이 아니라 다른 형태로 전환됩니다.'
+      explanation: '에너지는 사라지는 것이 아니라 다른 형태로 전환됩니다.',
+      detail: '에너지 보존 법칙에서는 에너지가 새로 생기거나 사라지지 않습니다. "형태가 바뀐다"거나 "조건이 결과를 바꾼다"는 표현은 맞는 설명이고, "사라진다"는 표현만 오개념입니다.'
     },
     {
       question: `${title}에서 속도가 커지는 순간 무엇이 함께 변할까요?`,
@@ -170,7 +174,8 @@ function createFallbackQuiz(concept, difficulty, questionCount, score = 0) {
       ],
       answerIndex: 0,
       hint: '속도와 연결된 에너지 이름을 떠올려 보세요.',
-      explanation: '속도 변화는 운동에너지 변화와 직접 관련됩니다.'
+      explanation: '속도 변화는 운동에너지 변화와 직접 관련됩니다.',
+      detail: '운동에너지는 속도의 제곱에 비례합니다. 속도가 커지면 운동에너지도 커지고, 작아지면 운동에너지도 작아집니다. "즉시 0이 된다"거나 "단위가 사라진다"는 물리적으로 일어날 수 없는 일입니다.'
     },
     {
       question: `${title} 문제를 풀 때 먼저 확인하면 좋은 것은 무엇일까요?`,
@@ -181,7 +186,8 @@ function createFallbackQuiz(concept, difficulty, questionCount, score = 0) {
       ],
       answerIndex: 0,
       hint: '문제 장면에서 에너지 전환을 먼저 찾으세요.',
-      explanation: '에너지 형태의 전환을 파악해야 공식을 고를 수 있습니다.'
+      explanation: '에너지 형태의 전환을 파악해야 공식을 고를 수 있습니다.',
+      detail: '물리 문제는 장면 속에서 어떤 에너지가 어떤 에너지로 바뀌는지부터 파악해야 알맞은 공식을 고를 수 있습니다. 이름 글자 수나 배경 색깔처럼 물리량과 무관한 정보는 풀이에 도움이 되지 않습니다.'
     },
     {
       question: `점수 ${score}점인 현재 단계에서 더 깊게 볼 것은 무엇일까요?`,
@@ -192,7 +198,8 @@ function createFallbackQuiz(concept, difficulty, questionCount, score = 0) {
       ],
       answerIndex: 0,
       hint: '높이, 속도, 거리 같은 조건 변화를 비교하세요.',
-      explanation: '조건이 바뀌면 에너지 전환의 양상도 달라집니다.'
+      explanation: '조건이 바뀌면 에너지 전환의 양상도 달라집니다.',
+      detail: '높이, 속도, 거리, 질량 같은 조건이 바뀌면 에너지 전환 결과도 함께 달라집니다. 선택지 순서에는 아무 규칙이 없고, 느낌만으로 고르면 조건 변화의 영향을 놓치기 쉽습니다.'
     }
   ];
   const base = templates[questionCount % templates.length];
@@ -268,8 +275,10 @@ function buildPrompt({ concept, score, questionCount, difficulty, quizSeed }) {
     '선택지 3개는 모두 그럴듯해야 하며, 오답 2개는 흔한 오개념을 반영한다.',
     '문제는 미션의 스포츠 상황과 연결하고, 공식 암기보다 에너지 흐름을 말로 설명하게 유도한다.',
     '응답은 설명 문장이나 마크다운 없이 JSON 객체 하나만 출력한다.',
+    'explanation은 정답을 확인해주는 짧은 한 문장이다.',
+    'detail은 학생이 오답을 골랐을 때만 보여줄 상세 설명이다. 왜 정답이 맞는지와 함께, 흔히 고르는 오답이 어떤 오개념 때문에 틀렸는지를 구체적으로 짚어준다.',
     'JSON 형식:',
-    '{"difficulty":"기초|적용|도전|심화","question":"문제","choices":["선택지1","선택지2","선택지3"],"answerIndex":0,"hint":"힌트","explanation":"정답 확인 설명"}',
+    '{"difficulty":"기초|적용|도전|심화","question":"문제","choices":["선택지1","선택지2","선택지3"],"answerIndex":0,"hint":"힌트","explanation":"정답 확인 설명","detail":"오답일 때 보여줄 상세 설명"}',
     '',
     `미션: ${cleanText(concept.training, 80)}`,
     `개념: ${cleanText(concept.title, 80)}`,
@@ -291,6 +300,7 @@ function buildPrompt({ concept, score, questionCount, difficulty, quizSeed }) {
     '- question은 1문장, 90자 이내로 쓴다.',
     '- choices의 각 선택지는 45자 이내로 쓴다.',
     '- hint와 explanation은 각각 70자 이내로 쓴다.',
+    '- detail은 100자 이상 200자 이내로, explanation보다 더 구체적으로 쓴다.',
     '- 숫자를 쓰는 경우 계산이 복잡하지 않게 하고 단위를 포함한다.',
     '- 학생을 격려하되 과장된 감탄사는 쓰지 않는다.'
   ].join('\n');
