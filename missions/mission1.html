@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="./mission1.css?v=3">
   <link rel="stylesheet" href="./mission-intro.css">
-  <link rel="stylesheet" href="./mission-ui.css?v=4">
+  <link rel="stylesheet" href="./mission-ui.css?v=5">
 </head>
 <body>
   <!-- 미션 인트로 -->
@@ -266,9 +266,17 @@
     window.addEventListener('resize', resize);
     raf = requestAnimationFrame(loop);
 
-    document.getElementById('mi-start').addEventListener('click', () => {
+    function beginMission1() {
       document.getElementById('mission-intro').classList.add('hidden');
       window.startMission1Tutorial?.();
+    }
+    document.getElementById('mi-start').addEventListener('click', beginMission1);
+    document.addEventListener('keydown', (e) => {
+      if (e.code !== 'Enter' && e.code !== 'Space') return;
+      const intro = document.getElementById('mission-intro');
+      if (intro.classList.contains('hidden')) return;
+      e.preventDefault();
+      beginMission1();
     });
     document.getElementById('gt-start').addEventListener('click', () => {
       document.getElementById('game-tutorial').classList.add('hidden');

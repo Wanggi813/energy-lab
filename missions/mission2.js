@@ -284,6 +284,8 @@ const canvas = document.getElementById('gameCanvas');
             clearTutorialTarget();
             ensureTutorialOverlay().classList.add('hidden');
             announceKeyboardStatus('튜토리얼이 끝났습니다. 화면을 누르거나 SPACE를 눌러 투구를 시작하세요.');
+            // 튜토리얼 중 실제로 던진 연습 투구는 점수에 반영하지 않고, 튜토리얼이 끝나면 항상 1라운드를 새로 시작한다.
+            resetGame();
         }
 
         function nextMission2TutorialStep() {
@@ -1031,18 +1033,27 @@ const canvas = document.getElementById('gameCanvas');
             state.phase = 'finished';
             sweepHint.style.opacity = '0';
 
+            // 튜토리얼 진행 중 발생한 투구는 연습으로 취급하고 실제 점수에 반영하지 않는다.
+            const isTutorialShot = tutorial.active;
+
             const dist = Math.abs(state.stone.x - state.house.x);
             const earned = options.forcedMiss ? 0 : calculateShotScore(dist);
             GAME.lastShotScore = earned;
-            GAME.score += earned;
+
+            if (!isTutorialShot) {
+                GAME.score += earned;
+            }
 
             const label = options.forcedMiss ? 'MISS' : earned >= 200 ? 'PERFECT' : earned >= 160 ? 'GREAT' : earned >= 120 ? 'GOOD' : earned >= 80 ? 'OK' : earned >= 30 ? 'NEAR' : 'MISS';
-            GAME.roundHistory.push({ round: GAME.round, label, earned });
-            renderRoundHistory();
 
-            if (GAME.score > GAME.best) {
-                GAME.best = GAME.score;
-                localStorage.setItem('curlingWorkEnergyBest', String(GAME.best));
+            if (!isTutorialShot) {
+                GAME.roundHistory.push({ round: GAME.round, label, earned });
+                renderRoundHistory();
+
+                if (GAME.score > GAME.best) {
+                    GAME.best = GAME.score;
+                    localStorage.setItem('curlingWorkEnergyBest', String(GAME.best));
+                }
             }
 
             updateGameUI();
@@ -1075,7 +1086,9 @@ const canvas = document.getElementById('gameCanvas');
                 resultMsg.classList.add('show-msg');
             }
 
-            if (GAME.round >= GAME.totalRounds) {
+            if (isTutorialShot) {
+                btnReset.innerText = 'Reset Shot';
+            } else if (GAME.round >= GAME.totalRounds) {
                 GAME.finished = true;
                 btnReset.innerText = 'New Game';
                 statusInd.innerText = `FINAL ${GAME.score}`;

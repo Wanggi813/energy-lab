@@ -309,11 +309,12 @@
       ui.tutorialTitle.textContent = item.title;
       ui.tutorialCopy.textContent = item.copy;
       ui.tutorialNext.textContent = item.next;
-      ui.tutorialNext.disabled = tutorial.step === 1
+      const waiting = tutorial.step === 1
         ? !(tutorial.changedK && tutorial.changedL)
         : tutorial.step === 2
           ? ui.start.disabled
           : false;
+      ui.tutorialNext.classList.toggle('is-waiting', waiting);
       ui.tutorialOverlay.querySelectorAll('.tutorial-progress span').forEach((node, index) => {
         node.classList.toggle('is-active', index === tutorial.step);
         node.classList.toggle('is-done', index < tutorial.step);
@@ -335,11 +336,31 @@
       setEvent('이제 실전입니다. 손님 조건을 보고 k와 L을 조절한 뒤 낙하를 시작하세요.');
     }
 
+    let tutorialNudgeTimer = null;
+    function nudgeTutorialNext(message) {
+      if (!ui.tutorialNext) return;
+      clearTimeout(tutorialNudgeTimer);
+      const restore = tutorial.steps[tutorial.step].next;
+      ui.tutorialNext.textContent = message;
+      ui.tutorialNext.classList.add('is-nudging');
+      tutorialNudgeTimer = setTimeout(() => {
+        ui.tutorialNext.textContent = restore;
+        ui.tutorialNext.classList.remove('is-nudging');
+      }, 1400);
+    }
+
     function nextTutorialStep() {
       if (!tutorial.active) return;
-      if (tutorial.step === 1 && !(tutorial.changedK && tutorial.changedL)) return;
+      if (tutorial.step === 1 && !(tutorial.changedK && tutorial.changedL)) {
+        nudgeTutorialNext('k와 L을 먼저 움직여보세요');
+        return;
+      }
       if (tutorial.step === 2) {
-        if (!ui.start.disabled) startRun();
+        if (ui.start.disabled) {
+          nudgeTutorialNext('k와 L을 0보다 크게 설정하세요');
+          return;
+        }
+        startRun();
         return;
       }
       if (tutorial.step >= tutorial.steps.length - 1) {

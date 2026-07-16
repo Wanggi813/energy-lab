@@ -480,7 +480,7 @@
             .bar-wrap { height: 9px; margin-bottom: 5px; }
 
             #progress-panel {
-                top: 8px; left: 8px;
+                top: 56px; left: 8px;
                 transform: none;
                 width: calc(100vw - 16px);
                 min-width: unset;

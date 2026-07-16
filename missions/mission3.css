@@ -307,6 +307,24 @@
       color: #021018;
     }
 
+    .tutorial-actions .primary.is-waiting {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--muted, #9fb0c3);
+      cursor: not-allowed;
+    }
+
+    .tutorial-actions .primary.is-nudging {
+      animation: tutorialNudgeShake 0.4s;
+      background: rgba(255, 99, 99, 0.85);
+      color: #2a0505;
+    }
+
+    @keyframes tutorialNudgeShake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
     .tutorial-target {
       position: relative;
       z-index: 31;

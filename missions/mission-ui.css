@@ -15,6 +15,11 @@
   left: 16px;
 }
 
+.mission-back-slot--mission4.mission-back-slot--visible {
+  top: 54px;
+  left: 16px;
+}
+
 .mission-back-btn {
   display: inline-flex;
   align-items: center;

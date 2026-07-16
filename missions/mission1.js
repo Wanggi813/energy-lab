@@ -14,6 +14,8 @@ const START_X = -LIP_X + 0.15;
 const TARGET_LANDINGS = 5;
 const RUN_TIME = 75;
 const AIR_SLOWMO = 0.62;
+const AIR_SPIN_ACCEL = 6.4;   // 방향키를 누르는 동안 회전이 붙는 세기 (클수록 반응이 빠름)
+const AIR_SPIN_DAMPING = 5.5; // 회전 저항 계수 — 방향키를 뗀 뒤 회전이 잦아드는 속도 (클수록 빨리 멈춰서 착지가 쉬워짐)
 
 const ui = {
   score: document.getElementById('score-value'),
@@ -446,8 +448,11 @@ function updateAir(dt) {
   state.vy -= G * dt;
   state.vx *= 1 - frictionLevel * 0.18 * dt;
   state.vy *= 1 - frictionLevel * 0.12 * dt;
-  state.angularVelocity += lean * dt * 5.2 * controlBoost;
-  state.angularVelocity *= 0.997;
+  state.angularVelocity += lean * dt * AIR_SPIN_ACCEL * controlBoost;
+  if (lean === 0) {
+    // 방향키를 누르고 있을 때는 회전이 계속 붙지만, 손을 떼는 순간부터는 회전 저항으로 빠르게 안정된다.
+    state.angularVelocity *= Math.max(0, 1 - AIR_SPIN_DAMPING * dt);
+  }
   state.boardAngle += state.angularVelocity * dt;
   state.rotation += Math.abs(state.angularVelocity * dt);
   state.px += state.vx * dt;
@@ -784,8 +789,18 @@ function bindControls() {
     if (e.code === 'ArrowLeft' || e.code === 'KeyA') input.left = true;
     if (e.code === 'ArrowRight' || e.code === 'KeyD') input.right = true;
     if (e.code === 'Space') {
-      input.pump = true;
       e.preventDefault();
+      if (state.mode === 'idle') {
+        const intro = document.getElementById('mission-intro');
+        const gameTutorial = document.getElementById('game-tutorial');
+        const introOpen = intro && !intro.classList.contains('hidden');
+        const tutorialOpen = gameTutorial && !gameTutorial.classList.contains('hidden');
+        if (!introOpen && !tutorialOpen) {
+          startRun();
+          return;
+        }
+      }
+      input.pump = true;
     }
   });
 
